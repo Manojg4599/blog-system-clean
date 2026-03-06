@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section>
+
+<h2>Request a Demo Blog</h2>
+
+<form action="/demo" method="POST">
+
+<label>Your Name</label><br>
+<input type="text" name="name" required><br><br>
+
+<label>Email</label><br>
+<input type="email" name="email" required><br><br>
+
+<label>Business Industry</label><br>
+<input type="text" name="industry" required><br><br>
+
+<label>Blog Topic</label><br>
+<input type="text" name="topic" required><br><br>
+
+<button type="submit">Request Demo Blog</button>
+
+</form>
+
+<p>Demo blogs are delivered within 48 hours.</p>
+
+</section>
+
+{% endblock %}
