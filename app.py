@@ -2,7 +2,7 @@ from flask import Flask, render_template
 from config import Config
 import os
 
-app = Flask(_name_)
+app = Flask(__name__)
 app.config.from_object(Config)
 
 # Ensure records folders exist
@@ -26,5 +26,5 @@ def dashboard():
     )
 
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     app.run(debug=True)
