@@ -1,30 +1,43 @@
-from flask import Flask, render_template
-from config import Config
-import os
+from flask import Flask, request, jsonify, render_template
+from db import get_db_connection, create_tables
 
 app = Flask(__name__)
-app.config.from_object(Config)
 
-# Ensure records folders exist
-os.makedirs("records/demo", exist_ok=True)
-os.makedirs("records/paid", exist_ok=True)
+create_tables()
 
 
 @app.route("/")
 def home():
-    return render_template(
-        "index.html",
-        business_name=Config.BUSINESS_NAME
-    )
+    return render_template("index.html")
 
 
-@app.route("/dashboard")
-def dashboard():
-    return render_template(
-        "dashboard.html",
-        business_name=Config.BUSINESS_NAME
+@app.route("/api/demo-request", methods=["POST"])
+def demo_request():
+
+    data = request.get_json()
+
+    name = data.get("name")
+    email = data.get("email")
+    industry = data.get("industry")
+    blog_topic = data.get("blog_topic")
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        INSERT INTO demo_requests (name,email,industry,blog_topic)
+        VALUES (%s,%s,%s,%s)
+        """,
+        (name, email, industry, blog_topic)
     )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify({"message": "Request saved"})
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
