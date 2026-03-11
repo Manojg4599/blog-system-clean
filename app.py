@@ -1,43 +1,46 @@
-from flask import Flask, request, jsonify, render_template
-from db import get_db_connection, create_tables
+import os
+import json
+from datetime import datetime
+from db import get_db_connection
 
-app = Flask(__name__)
+ORDERS_FOLDER = "orders"
 
-create_tables()
+@app.route("/submit-order", methods=["POST"])
+def submit_order():
 
-
-@app.route("/")
-def home():
-    return render_template("index.html")
-
-
-@app.route("/api/demo-request", methods=["POST"])
-def demo_request():
-
-    data = request.get_json()
-
-    name = data.get("name")
-    email = data.get("email")
-    industry = data.get("industry")
-    blog_topic = data.get("blog_topic")
+    data = request.form
 
     conn = get_db_connection()
-    cur = conn.cursor()
+    cursor = conn.cursor()
 
-    cur.execute(
-        """
-        INSERT INTO demo_requests (name,email,industry,blog_topic)
-        VALUES (%s,%s,%s,%s)
-        """,
-        (name, email, industry, blog_topic)
-    )
+    cursor.execute("""
+    INSERT INTO content_orders
+    (name,email,content_type,topic,audience,purpose,tone,length,keywords,instructions,tier)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?)
+    """, (
+        data["name"],
+        data["email"],
+        data["content_type"],
+        data["topic"],
+        data["audience"],
+        data["purpose"],
+        data["tone"],
+        data["length"],
+        data["keywords"],
+        data["instructions"],
+        data["tier"]
+    ))
+
+    order_id = cursor.lastrowid
 
     conn.commit()
-    cur.close()
     conn.close()
 
-    return jsonify({"message": "Request saved"})
+    order_folder = f"{ORDERS_FOLDER}/order_{order_id}"
 
+    os.makedirs(order_folder, exist_ok=True)
 
-if __name__ == "__main__":
-    app.run()
+    with open(f"{order_folder}/input.json","w") as f:
+        json.dump(dict(data), f, indent=4)
+
+    return "Order submitted successfully"
