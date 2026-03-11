@@ -1,60 +1,15 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>RankRise Content Studio</title>
-</head>
+<select name="content_type">
 
-<body>
+<option>Blog Article</option>
+<option>SEO Landing Page</option>
+<option>Comparison Page</option>
+<option>Tool Page</option>
+<option>Directory Page</option>
+<option>Essay</option>
+<option>Speech</option>
+<option>Debate Script</option>
+<option>Official Letter</option>
+<option>FAQ Page</option>
+<option>Educational Guide</option>
 
-<h1>RankRise Content Studio</h1>
-<h2>Request a Demo Blog</h2>
-
-<form id="demoForm">
-
-<input type="text" id="name" placeholder="Your Name" required>
-<br><br>
-
-<input type="email" id="email" placeholder="Email" required>
-<br><br>
-
-<input type="text" id="industry" placeholder="Business Industry">
-<br><br>
-
-<input type="text" id="topic" placeholder="Blog Topic">
-<br><br>
-
-<button type="submit">Request Demo Blog</button>
-
-</form>
-
-<p id="msg"></p>
-
-<script>
-
-document.getElementById("demoForm").addEventListener("submit", async function(e){
-
-e.preventDefault()
-
-const data = {
-name: document.getElementById("name").value,
-email: document.getElementById("email").value,
-industry: document.getElementById("industry").value,
-blog_topic: document.getElementById("topic").value
-}
-
-const response = await fetch("/api/demo-request",{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body: JSON.stringify(data)
-})
-
-document.getElementById("msg").innerText = "Request submitted successfully"
-
-})
-
-</script>
-
-</body>
-</html>
+</select>
