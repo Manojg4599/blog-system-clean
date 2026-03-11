@@ -1,13 +1,42 @@
+```html
 {% extends "base.html" %}
 
 {% block content %}
 
-<section>
+<h2>ContentForge Orders Dashboard</h2>
 
-<h2>Admin Dashboard</h2>
+<table border="1" cellpadding="10">
 
-<p>All blog requests will appear here.</p>
+<tr>
+<th>ID</th>
+<th>Topic</th>
+<th>Content Type</th>
+<th>Status</th>
+<th>Actions</th>
+</tr>
 
-</section>
+{% for order in orders %}
+
+<tr>
+
+<td>{{ order.id }}</td>
+<td>{{ order.topic }}</td>
+<td>{{ order.content_type }}</td>
+<td>{{ order.status }}</td>
+
+<td>
+
+<a href="/generate-prompt/{{ order.id }}">
+Generate Prompt
+</a>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
 
 {% endblock %}
+```
