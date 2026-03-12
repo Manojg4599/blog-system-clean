@@ -10,10 +10,9 @@ dashboard_bp = Blueprint("dashboard", __name__)
 ORDERS_FOLDER = "orders"
 
 
-# ---------------------------------------------------
-# Dashboard Home - List All Orders
-# ---------------------------------------------------
-
+# -----------------------------
+# Dashboard Home
+# -----------------------------
 @dashboard_bp.route("/dashboard")
 def dashboard_home():
 
@@ -31,10 +30,9 @@ def dashboard_home():
     )
 
 
-# ---------------------------------------------------
+# -----------------------------
 # Generate Prompt
-# ---------------------------------------------------
-
+# -----------------------------
 @dashboard_bp.route("/generate-prompt/<int:order_id>")
 def generate_order_prompt(order_id):
 
@@ -53,11 +51,12 @@ def generate_order_prompt(order_id):
     prompt = generate_prompt(order)
 
     order_folder = os.path.join(ORDERS_FOLDER, f"order_{order_id}")
+
     os.makedirs(order_folder, exist_ok=True)
 
-    prompt_path = os.path.join(order_folder, "prompt.txt")
+    prompt_file = os.path.join(order_folder, "prompt.txt")
 
-    with open(prompt_path, "w") as f:
+    with open(prompt_file, "w") as f:
         f.write(prompt)
 
     return render_template(
@@ -67,12 +66,11 @@ def generate_order_prompt(order_id):
     )
 
 
-# ---------------------------------------------------
+# -----------------------------
 # Save AI Output
-# ---------------------------------------------------
-
+# -----------------------------
 @dashboard_bp.route("/save-output/<int:order_id>", methods=["POST"])
-def save_ai_output(order_id):
+def save_output(order_id):
 
     ai_output = request.form.get("ai_output")
 
@@ -80,9 +78,9 @@ def save_ai_output(order_id):
 
     os.makedirs(order_folder, exist_ok=True)
 
-    output_path = os.path.join(order_folder, "ai_output.txt")
+    output_file = os.path.join(order_folder, "ai_output.txt")
 
-    with open(output_path, "w") as f:
+    with open(output_file, "w") as f:
         f.write(ai_output)
 
     return redirect(url_for("dashboard.dashboard_home"))
