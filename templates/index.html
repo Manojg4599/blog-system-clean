@@ -1,15 +1,103 @@
-<select name="content_type">
+<!DOCTYPE html>
+<html>
+<head>
+<title>ContentForge</title>
+<style>
+body{
+font-family:Arial;
+background:#f5f5f5;
+text-align:center;
+padding:40px;
+}
 
-<option>Blog Article</option>
-<option>SEO Landing Page</option>
-<option>Comparison Page</option>
-<option>Tool Page</option>
-<option>Directory Page</option>
-<option>Essay</option>
-<option>Speech</option>
-<option>Debate Script</option>
-<option>Official Letter</option>
-<option>FAQ Page</option>
-<option>Educational Guide</option>
+.container{
+background:white;
+padding:40px;
+border-radius:10px;
+width:600px;
+margin:auto;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
 
+input,select,textarea{
+width:100%;
+padding:10px;
+margin-top:10px;
+margin-bottom:20px;
+}
+
+button{
+background:#007BFF;
+color:white;
+padding:12px 20px;
+border:none;
+border-radius:5px;
+cursor:pointer;
+}
+
+button:hover{
+background:#0056b3;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>ContentForge</h1>
+
+<p>AI Powered Content Creation System</p>
+
+<h3>Submit Content Request</h3>
+
+<form id="contentForm">
+
+<input type="text" name="topic" placeholder="Topic" required>
+
+<select name="type">
+<option value="blog">Blog Post</option>
+<option value="landing">Landing Page</option>
+<option value="comparison">Comparison Article</option>
+<option value="guide">Guide</option>
+<option value="faq">FAQ Page</option>
 </select>
+
+<textarea name="details" placeholder="Describe your requirement"></textarea>
+
+<button type="submit">Submit Request</button>
+
+</form>
+
+<p id="msg"></p>
+
+</div>
+
+<script>
+
+document.getElementById("contentForm").onsubmit = async function(e){
+
+e.preventDefault()
+
+let formData = new FormData(this)
+
+let data = {}
+
+formData.forEach((v,k)=>data[k]=v)
+
+let res = await fetch("/submit",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify(data)
+})
+
+let result = await res.json()
+
+document.getElementById("msg").innerText=result.message
+
+}
+
+</script>
+
+</body>
+</html>
