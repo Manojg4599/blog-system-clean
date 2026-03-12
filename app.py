@@ -3,26 +3,30 @@ import os
 
 app = Flask(__name__)
 
-# Home Page
+
 @app.route("/")
 def home():
-    return "ContentForge Blog System Running Successfully!"
+    return render_template("index.html")
 
-# Demo order endpoint
+
 @app.route("/submit", methods=["POST"])
 def submit():
+
     data = request.json
+
+    print("New Request:", data)
+
     return jsonify({
-        "status": "success",
-        "message": "Order received",
-        "data": data
+        "status":"success",
+        "message":"Your request has been submitted!"
     })
 
-# Dashboard
+
 @app.route("/dashboard")
 def dashboard():
-    return "ContentForge Dashboard"
+    return "ContentForge Admin Dashboard"
+
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
+    port = int(os.environ.get("PORT",10000))
     app.run(host="0.0.0.0", port=port)
