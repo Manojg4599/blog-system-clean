@@ -1,51 +1,42 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+```python
+from flask import Flask, render_template, request, jsonify
 import os
 import json
 from datetime import datetime
 
 from config import Config
-from config.content_types import CONTENT_TYPES
 from db import get_db_connection
 from database import init_db
 
-# --------------------------------
-# Flask App Initialization
-# --------------------------------
+# Import dashboard blueprint
+from dashboard import dashboard_bp
 
 app = Flask(__name__)
 app.config.from_object(Config)
 
-# --------------------------------
-# Ensure Required Folders Exist
-# --------------------------------
+# Register dashboard routes
+app.register_blueprint(dashboard_bp)
 
-ORDERS_FOLDER = "orders"
-DATABASE_FOLDER = "database"
+# Ensure folders exist
+os.makedirs("orders", exist_ok=True)
+os.makedirs("database", exist_ok=True)
 
-os.makedirs(ORDERS_FOLDER, exist_ok=True)
-os.makedirs(DATABASE_FOLDER, exist_ok=True)
-
-# --------------------------------
-# Initialize Database
-# --------------------------------
-
+# Initialize database
 init_db()
 
-# --------------------------------
+
+# -----------------------------------
 # Home Page
-# --------------------------------
+# -----------------------------------
 
 @app.route("/")
 def home():
-    return render_template(
-        "index.html",
-        content_types=CONTENT_TYPES,
-        business_name=Config.BUSINESS_NAME
-    )
+    return render_template("index.html")
 
-# --------------------------------
-# Submit Content Order
-# --------------------------------
+
+# -----------------------------------
+# Submit Order
+# -----------------------------------
 
 @app.route("/submit-order", methods=["POST"])
 def submit_order():
@@ -65,13 +56,14 @@ def submit_order():
     tier = data.get("tier")
 
     conn = get_db_connection()
+
     cursor = conn.cursor()
 
     cursor.execute("""
         INSERT INTO content_orders
         (name,email,content_type,topic,audience,purpose,tone,length,keywords,instructions,tier,status,created_time)
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
-    """, (
+    """,(
         name,
         email,
         content_type,
@@ -92,17 +84,13 @@ def submit_order():
     conn.commit()
     conn.close()
 
-    # --------------------------------
-    # Create Order Folder
-    # --------------------------------
 
-    order_folder = os.path.join(ORDERS_FOLDER, f"order_{order_id}")
+    # Create order folder
+    order_folder = f"orders/order_{order_id}"
     os.makedirs(order_folder, exist_ok=True)
 
-    # --------------------------------
-    # Save Order Input
-    # --------------------------------
 
+    # Save input file
     order_data = {
         "order_id": order_id,
         "name": name,
@@ -115,71 +103,28 @@ def submit_order():
         "length": length,
         "keywords": keywords,
         "instructions": instructions,
-        "tier": tier,
-        "created_time": str(datetime.now())
+        "tier": tier
     }
 
-    with open(os.path.join(order_folder, "input.json"), "w") as f:
+    with open(f"{order_folder}/input.json", "w") as f:
         json.dump(order_data, f, indent=4)
+
 
     return jsonify({
         "status": "success",
-        "message": "Order submitted successfully",
         "order_id": order_id
     })
 
-# --------------------------------
-# List Orders (Basic Admin View)
-# --------------------------------
 
-@app.route("/orders")
-def list_orders():
-
-    conn = get_db_connection()
-
-    orders = conn.execute(
-        "SELECT * FROM content_orders ORDER BY created_time DESC"
-    ).fetchall()
-
-    conn.close()
-
-    return render_template(
-        "dashboard.html",
-        orders=orders
-    )
-
-# --------------------------------
-# View Single Order
-# --------------------------------
-
-@app.route("/order/<int:order_id>")
-def view_order(order_id):
-
-    conn = get_db_connection()
-
-    order = conn.execute(
-        "SELECT * FROM content_orders WHERE id=?",
-        (order_id,)
-    ).fetchone()
-
-    conn.close()
-
-    if order is None:
-        return "Order not found"
-
-    return jsonify(dict(order))
-
-# --------------------------------
-# Health Check (Render Friendly)
-# --------------------------------
+# -----------------------------------
+# Health Check
+# -----------------------------------
 
 @app.route("/health")
 def health():
     return "OK"
 
-# --------------------------------
-# Run App
-# --------------------------------
 
 if __name__ == "__main__":
     app.run(debug=True)
+```
