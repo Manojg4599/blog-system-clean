@@ -1,36 +1,63 @@
-```html
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html>
 
-{% block content %}
+<head>
 
-<h2>ContentForge Orders Dashboard</h2>
+<title>ContentForge Dashboard</title>
 
-<table border="1" cellpadding="10">
+<style>
+
+body{
+font-family:Arial;
+background:#f4f6f9;
+padding:40px;
+}
+
+table{
+width:100%;
+background:white;
+border-collapse:collapse;
+}
+
+th,td{
+padding:12px;
+border:1px solid #ddd;
+}
+
+th{
+background:#0073e6;
+color:white;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>ContentForge Orders Dashboard</h1>
+
+<table>
 
 <tr>
-<th>ID</th>
+<th>Type</th>
 <th>Topic</th>
-<th>Content Type</th>
-<th>Status</th>
-<th>Actions</th>
+<th>Audience</th>
+<th>Word Count</th>
+<th>Keywords</th>
+<th>Brand</th>
 </tr>
 
 {% for order in orders %}
 
 <tr>
 
-<td>{{ order.id }}</td>
-<td>{{ order.topic }}</td>
-<td>{{ order.content_type }}</td>
-<td>{{ order.status }}</td>
-
-<td>
-
-<a href="/generate-prompt/{{ order.id }}">
-Generate Prompt
-</a>
-
-</td>
+<td>{{order.type}}</td>
+<td>{{order.topic}}</td>
+<td>{{order.audience}}</td>
+<td>{{order.length}}</td>
+<td>{{order.keywords}}</td>
+<td>{{order.brand}}</td>
 
 </tr>
 
@@ -38,5 +65,6 @@ Generate Prompt
 
 </table>
 
-{% endblock %}
-```
+</body>
+
+</html>
