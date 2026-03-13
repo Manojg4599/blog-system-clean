@@ -1,44 +1,67 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>ContentForge</title>
+
+<title>ContentForge | Professional Content Creation</title>
+
 <style>
+
 body{
 font-family:Arial;
-background:#f5f5f5;
-text-align:center;
+background:#f4f6f9;
 padding:40px;
 }
 
 .container{
 background:white;
-padding:40px;
-border-radius:10px;
-width:600px;
+max-width:800px;
 margin:auto;
-box-shadow:0 0 10px rgba(0,0,0,0.1);
+padding:40px;
+border-radius:8px;
+box-shadow:0 0 12px rgba(0,0,0,0.08);
 }
 
-input,select,textarea{
+h1{
+text-align:center;
+margin-bottom:10px;
+}
+
+p{
+text-align:center;
+color:#666;
+margin-bottom:30px;
+}
+
+label{
+font-weight:bold;
+}
+
+select,input,textarea{
 width:100%;
 padding:10px;
-margin-top:10px;
+margin-top:6px;
 margin-bottom:20px;
+border:1px solid #ddd;
+border-radius:4px;
 }
 
 button{
-background:#007BFF;
+background:#0073e6;
 color:white;
-padding:12px 20px;
+padding:14px;
 border:none;
 border-radius:5px;
+width:100%;
+font-size:16px;
 cursor:pointer;
 }
 
 button:hover{
-background:#0056b3;
+background:#005bb5;
 }
+
 </style>
+
 </head>
 
 <body>
@@ -47,25 +70,61 @@ background:#0056b3;
 
 <h1>ContentForge</h1>
 
-<p>AI Powered Content Creation System</p>
-
-<h3>Submit Content Request</h3>
+<p>Professional SEO-Optimized Content Creation Service</p>
 
 <form id="contentForm">
 
-<input type="text" name="topic" placeholder="Topic" required>
+<label>Content Type</label>
 
 <select name="type">
-<option value="blog">Blog Post</option>
-<option value="landing">Landing Page</option>
-<option value="comparison">Comparison Article</option>
-<option value="guide">Guide</option>
-<option value="faq">FAQ Page</option>
+
+<option>Blog Article</option>
+<option>SEO Landing Page</option>
+<option>Product Comparison Article</option>
+<option>Educational Guide</option>
+<option>FAQ Page</option>
+<option>Business Article</option>
+
 </select>
 
-<textarea name="details" placeholder="Describe your requirement"></textarea>
+<label>Primary Topic</label>
 
-<button type="submit">Submit Request</button>
+<input name="topic" placeholder="Example: Best CRM Software for Small Business" required>
+
+<label>Target Audience</label>
+
+<select name="audience">
+
+<option>Business Owners</option>
+<option>Startups</option>
+<option>Professionals</option>
+<option>General Readers</option>
+
+</select>
+
+<label>Target Word Count</label>
+
+<select name="length">
+
+<option>800 - 1000 words</option>
+<option>1200 - 1500 words</option>
+<option>2000+ words</option>
+
+</select>
+
+<label>Main Keywords</label>
+
+<input name="keywords" placeholder="Example: CRM software, business CRM">
+
+<label>Website / Brand Name</label>
+
+<input name="brand" placeholder="Optional">
+
+<label>Additional Instructions</label>
+
+<textarea name="details" rows="4" placeholder="Any specific requirements or references"></textarea>
+
+<button type="submit">Submit Content Request</button>
 
 </form>
 
