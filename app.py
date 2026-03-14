@@ -4,11 +4,12 @@ import psycopg2
 
 app = Flask(__name__)
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+# Using new environment variable name
+DB_URL = os.getenv("DB_URL")
 
 
 def get_connection():
-    return psycopg2.connect(DATABASE_URL)
+    return psycopg2.connect(DB_URL)
 
 
 def init_db():
@@ -17,15 +18,16 @@ def init_db():
     cur = conn.cursor()
 
     cur.execute("""
-    CREATE TABLE IF NOT EXISTS orders (
+    CREATE TABLE IF NOT EXISTS orders(
         id SERIAL PRIMARY KEY,
-        type TEXT,
+        content_type TEXT,
         topic TEXT,
         audience TEXT,
         length TEXT,
         keywords TEXT,
         brand TEXT,
-        details TEXT
+        instructions TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
 
@@ -49,7 +51,8 @@ def submit():
 
     cur.execute(
         """
-        INSERT INTO orders (type, topic, audience, length, keywords, brand, details)
+        INSERT INTO orders
+        (content_type, topic, audience, length, keywords, brand, instructions)
         VALUES (%s,%s,%s,%s,%s,%s,%s)
         """,
         (
@@ -68,8 +71,8 @@ def submit():
     conn.close()
 
     return jsonify({
-        "status":"success",
-        "message":"Your request has been successfully submitted."
+        "status": "success",
+        "message": "Your request has been submitted successfully."
     })
 
 
@@ -79,7 +82,11 @@ def dashboard():
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("SELECT type,topic,audience,length,keywords,brand FROM orders")
+    cur.execute("""
+    SELECT content_type, topic, audience, length, keywords, brand
+    FROM orders
+    ORDER BY id DESC
+    """)
 
     orders = cur.fetchall()
 
@@ -93,6 +100,6 @@ if __name__ == "__main__":
 
     init_db()
 
-    port = int(os.environ.get("PORT",10000))
+    port = int(os.environ.get("PORT", 10000))
 
     app.run(host="0.0.0.0", port=port)
