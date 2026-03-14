@@ -2,62 +2,59 @@
 <html>
 <head>
 
-<title>ContentForge | Professional Content Creation</title>
+<title>ContentForge — Professional Content Request</title>
 
 <style>
 
 body{
-font-family:Arial;
-background:#f4f6f9;
+font-family: Arial;
+background:#f4f6f8;
 padding:40px;
 }
 
 .container{
+max-width:700px;
 background:white;
-max-width:800px;
+padding:30px;
 margin:auto;
-padding:40px;
 border-radius:8px;
-box-shadow:0 0 12px rgba(0,0,0,0.08);
+box-shadow:0 4px 10px rgba(0,0,0,0.1);
 }
 
 h1{
-text-align:center;
 margin-bottom:10px;
-}
-
-p{
-text-align:center;
-color:#666;
-margin-bottom:30px;
 }
 
 label{
 font-weight:bold;
+display:block;
+margin-top:15px;
 }
 
-select,input,textarea{
+.required{
+color:red;
+}
+
+input,select,textarea{
 width:100%;
 padding:10px;
-margin-top:6px;
-margin-bottom:20px;
-border:1px solid #ddd;
-border-radius:4px;
+margin-top:5px;
+border:1px solid #ccc;
+border-radius:5px;
 }
 
 button{
-background:#0073e6;
+margin-top:20px;
+padding:12px;
+background:#0a66c2;
 color:white;
-padding:14px;
 border:none;
 border-radius:5px;
-width:100%;
-font-size:16px;
 cursor:pointer;
 }
 
 button:hover{
-background:#005bb5;
+background:#004182;
 }
 
 </style>
@@ -68,67 +65,54 @@ background:#005bb5;
 
 <div class="container">
 
-<h1>ContentForge</h1>
-
-<p>Professional SEO-Optimized Content Creation Service</p>
+<h1>Content Request Form</h1>
 
 <form id="contentForm">
 
-<label>Content Type</label>
+<label>Content Type <span class="required">*</span></label>
+<select name="type" required>
 
-<select name="type">
-
+<option value="">Select</option>
 <option>Blog Article</option>
 <option>SEO Landing Page</option>
-<option>Product Comparison Article</option>
+<option>Comparison Page</option>
+<option>Essay</option>
+<option>Speech</option>
+<option>Debate Script</option>
+<option>Official Letter</option>
 <option>Educational Guide</option>
-<option>FAQ Page</option>
-<option>Business Article</option>
 
 </select>
 
-<label>Primary Topic</label>
+<label>Topic / Title <span class="required">*</span></label>
+<input name="topic" required>
 
-<input name="topic" placeholder="Example: Best CRM Software for Small Business" required>
+<label>Target Audience <span class="required">*</span></label>
+<input name="audience" required>
 
-<label>Target Audience</label>
-
-<select name="audience">
-
-<option>Business Owners</option>
-<option>Startups</option>
-<option>Professionals</option>
-<option>General Readers</option>
-
-</select>
-
-<label>Target Word Count</label>
-
+<label>Content Length</label>
 <select name="length">
 
-<option>800 - 1000 words</option>
-<option>1200 - 1500 words</option>
-<option>2000+ words</option>
+<option>1000 words</option>
+<option>1500 words</option>
+<option>2000 words</option>
 
 </select>
 
-<label>Main Keywords</label>
+<label>SEO Keywords</label>
+<input name="keywords">
 
-<input name="keywords" placeholder="Example: CRM software, business CRM">
-
-<label>Website / Brand Name</label>
-
-<input name="brand" placeholder="Optional">
+<label>Brand Name</label>
+<input name="brand">
 
 <label>Additional Instructions</label>
+<textarea name="details"></textarea>
 
-<textarea name="details" rows="4" placeholder="Any specific requirements or references"></textarea>
-
-<button type="submit">Submit Content Request</button>
+<button type="submit">Submit Request</button>
 
 </form>
 
-<p id="msg"></p>
+<p id="response"></p>
 
 </div>
 
@@ -136,25 +120,25 @@ background:#005bb5;
 
 document.getElementById("contentForm").onsubmit = async function(e){
 
-e.preventDefault()
+e.preventDefault();
 
-let formData = new FormData(this)
+const form = new FormData(this);
 
-let data = {}
+const data = Object.fromEntries(form.entries());
 
-formData.forEach((v,k)=>data[k]=v)
-
-let res = await fetch("/submit",{
+const res = await fetch("/submit",{
 method:"POST",
-headers:{"Content-Type":"application/json"},
+headers:{
+"Content-Type":"application/json"
+},
 body:JSON.stringify(data)
-})
+});
 
-let result = await res.json()
+const result = await res.json();
 
-document.getElementById("msg").innerText=result.message
+document.getElementById("response").innerText=result.message;
 
-}
+};
 
 </script>
 
