@@ -12,34 +12,30 @@ def get_connection():
 
 
 def init_db():
+    conn = get_connection()
+    cur = conn.cursor()
 
-    try:
-        conn = get_connection()
-        cur = conn.cursor()
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS orders(
+        id SERIAL PRIMARY KEY,
+        content_type TEXT,
+        topic TEXT,
+        audience TEXT,
+        length TEXT,
+        keywords TEXT,
+        brand TEXT,
+        instructions TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
 
-        cur.execute("""
-        CREATE TABLE IF NOT EXISTS orders(
-            id SERIAL PRIMARY KEY,
-            content_type TEXT,
-            topic TEXT,
-            audience TEXT,
-            length TEXT,
-            keywords TEXT,
-            brand TEXT,
-            instructions TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-        """)
+    conn.commit()
+    cur.close()
+    conn.close()
 
-        conn.commit()
 
-        cur.close()
-        conn.close()
-
-        print("Database initialized successfully")
-
-    except Exception as e:
-        print("DATABASE INIT ERROR:", str(e))
+# create table when app starts
+init_db()
 
 
 @app.route("/")
@@ -50,9 +46,18 @@ def home():
 @app.route("/submit", methods=["POST"])
 def submit():
 
-    try:
+    data = request.get_json()
 
-        data = request.get_json()
+    required_fields = ["type", "topic", "audience", "length"]
+
+    for field in required_fields:
+        if not data.get(field):
+            return jsonify({
+                "status": "error",
+                "message": f"The field '{field}' is required. Please fill it before submitting."
+            })
+
+    try:
 
         conn = get_connection()
         cur = conn.cursor()
@@ -75,53 +80,43 @@ def submit():
         )
 
         conn.commit()
-
         cur.close()
         conn.close()
 
         return jsonify({
             "status": "success",
-            "message": "Request submitted successfully"
+            "message": "Your content request has been successfully submitted. Our team will review it shortly."
         })
 
     except Exception as e:
 
         return jsonify({
             "status": "error",
-            "message": str(e)
+            "message": "There was a system error while saving your request. Please try again or contact support."
         })
 
 
 @app.route("/dashboard")
 def dashboard():
 
-    try:
+    conn = get_connection()
+    cur = conn.cursor()
 
-        conn = get_connection()
-        cur = conn.cursor()
+    cur.execute("""
+    SELECT content_type, topic, audience, length, keywords, brand
+    FROM orders
+    ORDER BY id DESC
+    """)
 
-        cur.execute("""
-        SELECT content_type, topic, audience, length, keywords, brand
-        FROM orders
-        ORDER BY id DESC
-        """)
+    orders = cur.fetchall()
 
-        orders = cur.fetchall()
+    cur.close()
+    conn.close()
 
-        cur.close()
-        conn.close()
-
-        return render_template("dashboard.html", orders=orders)
-
-    except Exception as e:
-
-        return "Database error: " + str(e)
+    return render_template("dashboard.html", orders=orders)
 
 
 if __name__ == "__main__":
 
-    init_db()
-
     port = int(os.environ.get("PORT", 10000))
-
     app.run(host="0.0.0.0", port=port)
