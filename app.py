@@ -8,15 +8,11 @@ DB_URL = os.getenv("DB_URL")
 
 
 def get_connection():
-    try:
-        conn = psycopg2.connect(DB_URL)
-        return conn
-    except Exception as e:
-        print("DATABASE CONNECTION ERROR:", e)
-        raise
+    return psycopg2.connect(DB_URL)
 
 
 def init_db():
+
     try:
         conn = get_connection()
         cur = conn.cursor()
@@ -36,13 +32,14 @@ def init_db():
         """)
 
         conn.commit()
+
         cur.close()
         conn.close()
 
         print("Database initialized successfully")
 
     except Exception as e:
-        print("DATABASE INIT ERROR:", e)
+        print("DATABASE INIT ERROR:", str(e))
 
 
 @app.route("/")
@@ -55,7 +52,7 @@ def submit():
 
     try:
 
-        data = request.json
+        data = request.get_json()
 
         conn = get_connection()
         cur = conn.cursor()
@@ -78,21 +75,20 @@ def submit():
         )
 
         conn.commit()
+
         cur.close()
         conn.close()
 
         return jsonify({
             "status": "success",
-            "message": "Your request has been submitted successfully."
+            "message": "Request submitted successfully"
         })
 
     except Exception as e:
 
-        print("SUBMIT ERROR:", e)
-
         return jsonify({
             "status": "error",
-            "message": "Submission failed"
+            "message": str(e)
         })
 
 
@@ -119,9 +115,7 @@ def dashboard():
 
     except Exception as e:
 
-        print("DASHBOARD ERROR:", e)
-
-        return "Database error. Check server logs."
+        return "Database error: " + str(e)
 
 
 if __name__ == "__main__":
