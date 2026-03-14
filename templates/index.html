@@ -2,27 +2,23 @@
 <html>
 <head>
 
-<title>ContentForge — Professional Content Request</title>
+<title>ContentForge Content Request</title>
 
 <style>
 
 body{
-font-family: Arial;
+font-family:Arial;
 background:#f4f6f8;
 padding:40px;
 }
 
 .container{
-max-width:700px;
-background:white;
-padding:30px;
+max-width:750px;
 margin:auto;
+background:white;
+padding:35px;
 border-radius:8px;
-box-shadow:0 4px 10px rgba(0,0,0,0.1);
-}
-
-h1{
-margin-bottom:10px;
+box-shadow:0 4px 12px rgba(0,0,0,0.1);
 }
 
 label{
@@ -38,23 +34,36 @@ color:red;
 input,select,textarea{
 width:100%;
 padding:10px;
-margin-top:5px;
-border:1px solid #ccc;
+margin-top:6px;
 border-radius:5px;
+border:1px solid #ccc;
 }
 
 button{
-margin-top:20px;
+margin-top:25px;
 padding:12px;
 background:#0a66c2;
 color:white;
 border:none;
-border-radius:5px;
+border-radius:6px;
 cursor:pointer;
 }
 
 button:hover{
 background:#004182;
+}
+
+.keyword{
+display:inline-block;
+background:#e6f0ff;
+padding:6px 10px;
+margin:4px;
+border-radius:4px;
+cursor:pointer;
+}
+
+.keyword:hover{
+background:#cce0ff;
 }
 
 </style>
@@ -65,48 +74,92 @@ background:#004182;
 
 <div class="container">
 
-<h1>Content Request Form</h1>
+<h2>Content Request Form</h2>
 
 <form id="contentForm">
 
 <label>Content Type <span class="required">*</span></label>
+
 <select name="type" required>
 
-<option value="">Select</option>
+<option value="">Select Content Type</option>
+
 <option>Blog Article</option>
 <option>SEO Landing Page</option>
 <option>Comparison Page</option>
+<option>Tool Page</option>
+<option>Directory Page</option>
 <option>Essay</option>
 <option>Speech</option>
 <option>Debate Script</option>
 <option>Official Letter</option>
+<option>FAQ Page</option>
 <option>Educational Guide</option>
 
 </select>
 
-<label>Topic / Title <span class="required">*</span></label>
-<input name="topic" required>
+
+<label>Content Topic / Title <span class="required">*</span></label>
+
+<input name="topic" placeholder="Example: Best Accounting Software for Small Business" required>
+
 
 <label>Target Audience <span class="required">*</span></label>
-<input name="audience" required>
 
-<label>Content Length</label>
-<select name="length">
+<select name="audience" required>
+
+<option value="">Select Audience</option>
+
+<option>Business Owners</option>
+<option>Startup Founders</option>
+<option>Marketing Professionals</option>
+<option>Students</option>
+<option>General Consumers</option>
+<option>Industry Experts</option>
+<option>Government / Policy Audience</option>
+<option value="custom">Custom Audience</option>
+
+</select>
+
+
+<label>Content Length (Approximate) <span class="required">*</span></label>
+
+<select name="length" required>
 
 <option>1000 words</option>
 <option>1500 words</option>
 <option>2000 words</option>
+<option>3000+ words</option>
 
 </select>
 
-<label>SEO Keywords</label>
-<input name="keywords">
 
-<label>Brand Name</label>
-<input name="brand">
+<label>SEO Keywords</label>
+
+<input id="keywords" name="keywords" placeholder="Enter main keyword">
+
+<p>Suggested keywords based on common SEO patterns:</p>
+
+<div>
+
+<span class="keyword">best tools</span>
+<span class="keyword">complete guide</span>
+<span class="keyword">comparison</span>
+<span class="keyword">benefits</span>
+<span class="keyword">how to choose</span>
+
+</div>
+
+
+<label>Brand Name / Website Name</label>
+
+<input name="brand" placeholder="Example: ContentForge or your website/company name">
+
 
 <label>Additional Instructions</label>
-<textarea name="details"></textarea>
+
+<textarea name="details" placeholder="You may add special instructions such as tone (professional, persuasive), competitors to reference, internal links, or specific points you want covered."></textarea>
+
 
 <button type="submit">Submit Request</button>
 
@@ -118,15 +171,22 @@ background:#004182;
 
 <script>
 
-document.getElementById("contentForm").onsubmit = async function(e){
+document.querySelectorAll(".keyword").forEach(k=>{
+k.onclick=function(){
+const box=document.getElementById("keywords");
+box.value=box.value+" "+this.innerText;
+}
+});
+
+document.getElementById("contentForm").onsubmit=async function(e){
 
 e.preventDefault();
 
-const form = new FormData(this);
+const form=new FormData(this);
 
-const data = Object.fromEntries(form.entries());
+const data=Object.fromEntries(form.entries());
 
-const res = await fetch("/submit",{
+const res=await fetch("/submit",{
 method:"POST",
 headers:{
 "Content-Type":"application/json"
@@ -134,7 +194,7 @@ headers:{
 body:JSON.stringify(data)
 });
 
-const result = await res.json();
+const result=await res.json();
 
 document.getElementById("response").innerText=result.message;
 
