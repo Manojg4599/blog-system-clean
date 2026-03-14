@@ -15,8 +15,8 @@ padding:40px;
 
 table{
 width:100%;
-background:white;
 border-collapse:collapse;
+background:white;
 }
 
 th,td{
@@ -43,7 +43,7 @@ color:white;
 <th>Type</th>
 <th>Topic</th>
 <th>Audience</th>
-<th>Word Count</th>
+<th>Length</th>
 <th>Keywords</th>
 <th>Brand</th>
 </tr>
@@ -52,12 +52,12 @@ color:white;
 
 <tr>
 
-<td>{{order.type}}</td>
-<td>{{order.topic}}</td>
-<td>{{order.audience}}</td>
-<td>{{order.length}}</td>
-<td>{{order.keywords}}</td>
-<td>{{order.brand}}</td>
+<td>{{order[0]}}</td>
+<td>{{order[1]}}</td>
+<td>{{order[2]}}</td>
+<td>{{order[3]}}</td>
+<td>{{order[4]}}</td>
+<td>{{order[5]}}</td>
 
 </tr>
 
@@ -66,5 +66,4 @@ color:white;
 </table>
 
 </body>
-
 </html>
