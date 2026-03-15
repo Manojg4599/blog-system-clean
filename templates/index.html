@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
 <title>ContentForge Content Request</title>
@@ -99,9 +100,9 @@ background:#cce0ff;
 </select>
 
 
-<label>Content Topic / Title <span class="required">*</span></label>
+<label>Topic / Title <span class="required">*</span></label>
 
-<input name="topic" placeholder="Example: Best Accounting Software for Small Business" required>
+<input id="topic" name="topic" placeholder="Example: Accounting Software for Small Business" required>
 
 
 <label>Target Audience <span class="required">*</span></label>
@@ -122,7 +123,7 @@ background:#cce0ff;
 </select>
 
 
-<label>Content Length (Approximate) <span class="required">*</span></label>
+<label>Content Length <span class="required">*</span></label>
 
 <select name="length" required>
 
@@ -136,29 +137,19 @@ background:#cce0ff;
 
 <label>SEO Keywords</label>
 
-<input id="keywords" name="keywords" placeholder="Enter main keyword">
+<input id="keywords" name="keywords" placeholder="Enter keywords or click suggestions">
 
-<p>Suggested keywords based on common SEO patterns:</p>
-
-<div>
-
-<span class="keyword">best tools</span>
-<span class="keyword">complete guide</span>
-<span class="keyword">comparison</span>
-<span class="keyword">benefits</span>
-<span class="keyword">how to choose</span>
-
-</div>
+<div id="keywordSuggestions"></div>
 
 
 <label>Brand Name / Website Name</label>
 
-<input name="brand" placeholder="Example: ContentForge or your website/company name">
+<input name="brand" placeholder="Example: Your Company or Website Name">
 
 
 <label>Additional Instructions</label>
 
-<textarea name="details" placeholder="You may add special instructions such as tone (professional, persuasive), competitors to reference, internal links, or specific points you want covered."></textarea>
+<textarea name="details" placeholder="Mention tone, competitors, references, or special requirements."></textarea>
 
 
 <button type="submit">Submit Request</button>
@@ -169,14 +160,55 @@ background:#cce0ff;
 
 </div>
 
+
 <script>
 
-document.querySelectorAll(".keyword").forEach(k=>{
-k.onclick=function(){
-const box=document.getElementById("keywords");
-box.value=box.value+" "+this.innerText;
-}
+document.getElementById("topic").addEventListener("blur", async function(){
+
+const topic=this.value;
+
+if(!topic) return;
+
+const res=await fetch("/keywords",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({topic:topic})
+
 });
+
+const data=await res.json();
+
+const container=document.getElementById("keywordSuggestions");
+
+container.innerHTML="";
+
+data.keywords.forEach(k=>{
+
+const span=document.createElement("span");
+
+span.className="keyword";
+
+span.innerText=k;
+
+span.onclick=function(){
+
+const box=document.getElementById("keywords");
+
+box.value=box.value+" "+k;
+
+};
+
+container.appendChild(span);
+
+});
+
+});
+
 
 document.getElementById("contentForm").onsubmit=async function(e){
 
@@ -187,11 +219,13 @@ const form=new FormData(this);
 const data=Object.fromEntries(form.entries());
 
 const res=await fetch("/submit",{
+
 method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
+
+headers:{"Content-Type":"application/json"},
+
 body:JSON.stringify(data)
+
 });
 
 const result=await res.json();
@@ -203,4 +237,5 @@ document.getElementById("response").innerText=result.message;
 </script>
 
 </body>
+
 </html>
