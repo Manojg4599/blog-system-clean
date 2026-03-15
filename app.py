@@ -4,7 +4,6 @@ import psycopg2
 
 app = Flask(__name__)
 
-# Database connection
 DB_URL = os.getenv("DB_URL")
 
 
@@ -20,6 +19,8 @@ def init_db():
     cur.execute("""
     CREATE TABLE IF NOT EXISTS orders(
         id SERIAL PRIMARY KEY,
+        customer_name TEXT,
+        customer_email TEXT,
         content_type TEXT,
         topic TEXT,
         audience TEXT,
@@ -36,7 +37,7 @@ def init_db():
     conn.close()
 
 
-# Ensure table exists when server starts
+# run when server starts
 init_db()
 
 
@@ -46,7 +47,7 @@ def home():
 
 
 # ==============================
-# SUBMIT CONTENT REQUEST
+# SUBMIT REQUEST
 # ==============================
 
 @app.route("/submit", methods=["POST"])
@@ -54,7 +55,14 @@ def submit():
 
     data = request.get_json()
 
-    required = ["type", "topic", "audience", "length"]
+    required = [
+        "name",
+        "email",
+        "type",
+        "topic",
+        "audience",
+        "length"
+    ]
 
     for field in required:
 
@@ -62,7 +70,7 @@ def submit():
 
             return jsonify({
                 "status": "error",
-                "message": f"The field '{field}' is required. Please complete it."
+                "message": f"The field '{field}' is required."
             })
 
     try:
@@ -73,10 +81,12 @@ def submit():
         cur.execute(
             """
             INSERT INTO orders
-            (content_type, topic, audience, length, keywords, brand, instructions)
-            VALUES (%s,%s,%s,%s,%s,%s,%s)
+            (customer_name, customer_email, content_type, topic, audience, length, keywords, brand, instructions)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
             """,
             (
+                data.get("name"),
+                data.get("email"),
                 data.get("type"),
                 data.get("topic"),
                 data.get("audience"),
@@ -94,7 +104,7 @@ def submit():
 
         return jsonify({
             "status": "success",
-            "message": "Your request has been submitted successfully."
+            "message": "Your request has been submitted successfully. Our team will review it shortly."
         })
 
     except Exception as e:
@@ -116,7 +126,7 @@ def dashboard():
     cur = conn.cursor()
 
     cur.execute("""
-    SELECT content_type, topic, audience, length, keywords, brand
+    SELECT customer_name, customer_email, content_type, topic
     FROM orders
     ORDER BY id DESC
     """)
@@ -130,7 +140,7 @@ def dashboard():
 
 
 # ==============================
-# KEYWORD GENERATOR ENGINE
+# KEYWORD ENGINE
 # ==============================
 
 @app.route("/keywords", methods=["POST"])
@@ -138,10 +148,10 @@ def keywords():
 
     data = request.get_json()
 
-    topic = data.get("topic", "").lower()
+    topic = data.get("topic","").lower()
 
     if not topic:
-        return jsonify({"keywords": []})
+        return jsonify({"keywords":[]})
 
     suggestions = [
 
@@ -154,14 +164,15 @@ def keywords():
         f"{topic} for beginners",
         f"how to choose {topic}",
         f"{topic} tools",
-        f"{topic} vs alternatives"
+        f"{topic} alternatives"
+
     ]
 
-    return jsonify({"keywords": suggestions})
+    return jsonify({"keywords":suggestions})
 
 
 if __name__ == "__main__":
 
-    port = int(os.environ.get("PORT", 10000))
+    port = int(os.environ.get("PORT",10000))
 
     app.run(host="0.0.0.0", port=port)
