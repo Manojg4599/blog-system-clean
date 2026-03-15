@@ -4,6 +4,7 @@ import psycopg2
 
 app = Flask(__name__)
 
+# Database connection
 DB_URL = os.getenv("DB_URL")
 
 
@@ -12,6 +13,7 @@ def get_connection():
 
 
 def init_db():
+
     conn = get_connection()
     cur = conn.cursor()
 
@@ -34,7 +36,7 @@ def init_db():
     conn.close()
 
 
-# create table when app starts
+# Ensure table exists when server starts
 init_db()
 
 
@@ -43,18 +45,24 @@ def home():
     return render_template("index.html")
 
 
+# ==============================
+# SUBMIT CONTENT REQUEST
+# ==============================
+
 @app.route("/submit", methods=["POST"])
 def submit():
 
     data = request.get_json()
 
-    required_fields = ["type", "topic", "audience", "length"]
+    required = ["type", "topic", "audience", "length"]
 
-    for field in required_fields:
+    for field in required:
+
         if not data.get(field):
+
             return jsonify({
                 "status": "error",
-                "message": f"The field '{field}' is required. Please fill it before submitting."
+                "message": f"The field '{field}' is required. Please complete it."
             })
 
     try:
@@ -80,21 +88,26 @@ def submit():
         )
 
         conn.commit()
+
         cur.close()
         conn.close()
 
         return jsonify({
             "status": "success",
-            "message": "Your content request has been successfully submitted. Our team will review it shortly."
+            "message": "Your request has been submitted successfully."
         })
 
     except Exception as e:
 
         return jsonify({
             "status": "error",
-            "message": "There was a system error while saving your request. Please try again or contact support."
+            "message": "System error while saving request."
         })
 
+
+# ==============================
+# DASHBOARD
+# ==============================
 
 @app.route("/dashboard")
 def dashboard():
@@ -116,7 +129,39 @@ def dashboard():
     return render_template("dashboard.html", orders=orders)
 
 
+# ==============================
+# KEYWORD GENERATOR ENGINE
+# ==============================
+
+@app.route("/keywords", methods=["POST"])
+def keywords():
+
+    data = request.get_json()
+
+    topic = data.get("topic", "").lower()
+
+    if not topic:
+        return jsonify({"keywords": []})
+
+    suggestions = [
+
+        topic,
+        f"best {topic}",
+        f"{topic} guide",
+        f"{topic} comparison",
+        f"top {topic}",
+        f"{topic} benefits",
+        f"{topic} for beginners",
+        f"how to choose {topic}",
+        f"{topic} tools",
+        f"{topic} vs alternatives"
+    ]
+
+    return jsonify({"keywords": suggestions})
+
+
 if __name__ == "__main__":
 
     port = int(os.environ.get("PORT", 10000))
+
     app.run(host="0.0.0.0", port=port)
