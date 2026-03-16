@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
 <head>
 
 <title>ContentForge Content Request</title>
@@ -9,62 +8,66 @@
 
 body{
 font-family:Arial;
-background:#f4f6f8;
-padding:40px;
+background:#f1f3f4;
 }
 
 .container{
-max-width:750px;
+
+width:700px;
 margin:auto;
 background:white;
-padding:35px;
-border-radius:8px;
-box-shadow:0 4px 12px rgba(0,0,0,0.1);
-}
+padding:40px;
+border-radius:10px;
+box-shadow:0 2px 10px rgba(0,0,0,0.1)
 
-label{
-font-weight:bold;
-display:block;
-margin-top:15px;
-}
-
-.required{
-color:red;
 }
 
 input,select,textarea{
+
 width:100%;
-padding:10px;
+padding:12px;
 margin-top:6px;
-border-radius:5px;
-border:1px solid #ccc;
+margin-bottom:20px;
+border-radius:6px;
+border:1px solid #ccc
+
 }
 
 button{
-margin-top:25px;
-padding:12px;
-background:#0a66c2;
+
+background:#4285f4;
 color:white;
 border:none;
+padding:14px;
+width:100%;
+font-size:16px;
 border-radius:6px;
-cursor:pointer;
+cursor:pointer
+
 }
 
 button:hover{
-background:#004182;
+background:#2f6ad9
 }
 
-.keyword{
-display:inline-block;
-background:#e6f0ff;
-padding:6px 10px;
-margin:4px;
-border-radius:4px;
-cursor:pointer;
+.success{
+
+background:#e6f4ea;
+padding:15px;
+border-radius:6px;
+margin-top:20px;
+display:none
+
 }
 
-.keyword:hover{
-background:#cce0ff;
+.error{
+
+background:#fce8e6;
+padding:15px;
+border-radius:6px;
+margin-top:20px;
+display:none
+
 }
 
 </style>
@@ -75,173 +78,113 @@ background:#cce0ff;
 
 <div class="container">
 
-<h2>Content Request Form</h2>
+<h2>ContentForge Content Request Form</h2>
 
-<form id="contentForm">
+<label>Your Name / Business Name</label>
+<input id="name">
 
-<label>Your Name <span class="required">*</span></label>
-<input name="name" placeholder="Enter your full name" required>
+<label>Email Address</label>
+<input id="email">
 
-<label>Email Address <span class="required">*</span></label>
-<input name="email" type="email" placeholder="Enter your email address" required>
+<label>Content Type</label>
 
-<label>Content Type <span class="required">*</span></label>
-
-<select name="type" required>
-
-<option value="">Select Content Type</option>
+<select id="type">
 
 <option>Blog Article</option>
 <option>SEO Landing Page</option>
 <option>Comparison Page</option>
-<option>Tool Page</option>
-<option>Directory Page</option>
-<option>Essay</option>
-<option>Speech</option>
-<option>Debate Script</option>
-<option>Official Letter</option>
-<option>FAQ Page</option>
 <option>Educational Guide</option>
+<option>FAQ Page</option>
 
 </select>
 
 
-<label>Topic / Title <span class="required">*</span></label>
+<label>Topic</label>
+<input id="topic">
 
-<input id="topic" name="topic" placeholder="Example: Accounting Software for Small Business" required>
+<label>Target Audience</label>
+<input id="audience">
 
-
-<label>Target Audience <span class="required">*</span></label>
-
-<select name="audience" required>
-
-<option value="">Select Audience</option>
-
-<option>Business Owners</option>
-<option>Startup Founders</option>
-<option>Marketing Professionals</option>
-<option>Students</option>
-<option>General Consumers</option>
-<option>Industry Experts</option>
-<option>Government / Policy Audience</option>
-<option value="custom">Custom Audience</option>
-
-</select>
-
-
-<label>Content Length <span class="required">*</span></label>
-
-<select name="length" required>
-
+<label>Preferred Article Length</label>
+<select id="length">
 <option>1000 words</option>
 <option>1500 words</option>
 <option>2000 words</option>
-<option>3000+ words</option>
-
 </select>
 
-
 <label>SEO Keywords</label>
+<textarea id="keywords"></textarea>
 
-<input id="keywords" name="keywords" placeholder="Enter keywords or click suggestions">
+<label>Business / Brand Name</label>
+<input id="brand">
 
-<div id="keywordSuggestions"></div>
-
-
-<label>Brand Name / Website Name</label>
-
-<input name="brand" placeholder="Example: Your Company or Website Name">
-
+<label>Website URL (optional)</label>
+<input id="website">
 
 <label>Additional Instructions</label>
+<textarea id="details"></textarea>
 
-<textarea name="details" placeholder="Mention tone, competitors, references, or special requirements."></textarea>
 
+<button onclick="submitForm()">Submit Request</button>
 
-<button type="submit">Submit Request</button>
+<div class="success" id="success">Request submitted successfully. Please check your email.</div>
 
-</form>
-
-<p id="response"></p>
+<div class="error" id="error"></div>
 
 </div>
 
 
 <script>
 
-document.getElementById("topic").addEventListener("blur", async function(){
+function submitForm(){
 
-const topic=this.value;
+let data={
 
-if(!topic) return;
+name:document.getElementById("name").value,
+email:document.getElementById("email").value,
+type:document.getElementById("type").value,
+topic:document.getElementById("topic").value,
+audience:document.getElementById("audience").value,
+length:document.getElementById("length").value,
+keywords:document.getElementById("keywords").value,
+brand:document.getElementById("brand").value,
+website:document.getElementById("website").value,
+details:document.getElementById("details").value
 
-const res=await fetch("/keywords",{
+}
 
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({topic:topic})
-
-});
-
-const data=await res.json();
-
-const container=document.getElementById("keywordSuggestions");
-
-container.innerHTML="";
-
-data.keywords.forEach(k=>{
-
-const span=document.createElement("span");
-
-span.className="keyword";
-
-span.innerText=k;
-
-span.onclick=function(){
-
-const box=document.getElementById("keywords");
-
-box.value=box.value+" "+k;
-
-};
-
-container.appendChild(span);
-
-});
-
-});
-
-
-document.getElementById("contentForm").onsubmit=async function(e){
-
-e.preventDefault();
-
-const form=new FormData(this);
-
-const data=Object.fromEntries(form.entries());
-
-const res=await fetch("/submit",{
+fetch("/submit",{
 
 method:"POST",
-
 headers:{"Content-Type":"application/json"},
-
 body:JSON.stringify(data)
 
-});
+})
 
-const result=await res.json();
+.then(res=>res.json())
 
-document.getElementById("response").innerText=result.message;
+.then(data=>{
 
-};
+if(data.success){
+
+document.getElementById("success").style.display="block"
+
+}
+
+if(data.error){
+
+let e=document.getElementById("error")
+
+e.style.display="block"
+e.innerText=data.error
+
+}
+
+})
+
+}
 
 </script>
 
 </body>
-
 </html>
