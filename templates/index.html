@@ -64,6 +64,27 @@ padding:15px;
 border-radius:6px
 }
 
+.keywordBox{
+background:#f8f9fa;
+padding:15px;
+border-radius:6px;
+margin-bottom:20px
+}
+
+.keyword{
+display:inline-block;
+background:#e8f0fe;
+padding:6px 10px;
+margin:5px;
+border-radius:4px;
+cursor:pointer;
+font-size:13px
+}
+
+.keyword:hover{
+background:#d2e3fc
+}
+
 </style>
 
 </head>
@@ -99,7 +120,8 @@ border-radius:6px
 
 
 <label>4. Topic / Title <span class="required">*</span></label>
-<input id="topic" placeholder="Example: Digital Marketing for Small Businesses">
+
+<input id="topic" placeholder="Example: Digital Marketing for Small Businesses" oninput="generateKeywords()">
 
 
 <label>5. Target Audience</label>
@@ -119,10 +141,16 @@ border-radius:6px
 <label>6. SEO Keywords <span class="required">*</span></label>
 
 <textarea id="keywords"
-placeholder="Example:
-digital marketing strategies
-small business marketing
-seo marketing tips"></textarea>
+placeholder="Click suggested keywords below to add them"></textarea>
+
+
+<div class="keywordBox">
+
+<b>Suggested SEO Keywords</b>
+
+<div id="keywordSuggestions"></div>
+
+</div>
 
 
 <label>7. Business / Brand Name</label>
@@ -151,6 +179,63 @@ Your request has been submitted successfully. Please check your email.
 </div>
 
 <script>
+
+
+function generateKeywords(){
+
+let topic=document.getElementById("topic").value
+
+if(topic.length<3) return
+
+let modifiers=[
+
+"best",
+"guide",
+"tips",
+"strategies",
+"examples",
+"for beginners",
+"for business",
+"for startups",
+"2025",
+"tools",
+"how to",
+"complete guide",
+"step by step",
+"benefits",
+"case study"
+
+]
+
+let container=document.getElementById("keywordSuggestions")
+
+container.innerHTML=""
+
+modifiers.forEach(m=>{
+
+let kw=topic+" "+m
+
+let span=document.createElement("span")
+
+span.className="keyword"
+
+span.innerText=kw
+
+span.onclick=function(){
+
+let textarea=document.getElementById("keywords")
+
+textarea.value+=kw+"\n"
+
+}
+
+container.appendChild(span)
+
+})
+
+}
+
+
 
 function submitForm(){
 
