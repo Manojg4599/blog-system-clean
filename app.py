@@ -16,10 +16,83 @@ def get_connection():
     return psycopg2.connect(DB_URL)
 
 
+# ------------------------------
+# CONTENT PRICING TABLE
+# ------------------------------
+
+PRICING = {
+
+"Blog Article": {
+"single":"₹1,050",
+"plan10":"₹8,500 / month (10 Articles)",
+"plan15":"₹12,000 / month (15 Articles)"
+},
+
+"SEO Landing Page": {
+"single":"₹1,250",
+"plan10":"₹10,000 / month (10 Pages)",
+"plan15":"₹14,000 / month (15 Pages)"
+},
+
+"Comparison Page": {
+"single":"₹1,150",
+"plan10":"₹9,200 / month (10 Articles)",
+"plan15":"₹13,000 / month (15 Articles)"
+},
+
+"Educational Guide": {
+"single":"₹1,350",
+"plan10":"₹10,800 / month (10 Guides)",
+"plan15":"₹15,000 / month (15 Guides)"
+},
+
+"FAQ Page": {
+"single":"₹900",
+"plan10":"₹7,200 / month (10 Pages)",
+"plan15":"₹10,000 / month (15 Pages)"
+},
+
+"Tool Page": {
+"single":"₹1,200",
+"plan10":"₹9,500 / month (10 Pages)",
+"plan15":"₹13,500 / month (15 Pages)"
+},
+
+"Directory Page": {
+"single":"₹1,100",
+"plan10":"₹8,800 / month (10 Pages)",
+"plan15":"₹12,500 / month (15 Pages)"
+},
+
+"Speech": {
+"single":"₹1,500",
+"plan10":"₹12,000 / month (10 Speeches)",
+"plan15":"₹17,000 / month (15 Speeches)"
+},
+
+"Essay": {
+"single":"₹900",
+"plan10":"₹7,000 / month (10 Essays)",
+"plan15":"₹9,500 / month (15 Essays)"
+},
+
+"Official Letter": {
+"single":"₹700",
+"plan10":"₹5,500 / month (10 Letters)",
+"plan15":"₹7,500 / month (15 Letters)"
+}
+
+}
+
+
+# ------------------------------
+# DATABASE INIT
+# ------------------------------
+
 def init_db():
 
-    conn = get_connection()
-    cur = conn.cursor()
+    conn=get_connection()
+    cur=conn.cursor()
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS orders(
@@ -38,50 +111,118 @@ def init_db():
     """)
 
     conn.commit()
+
     cur.close()
     conn.close()
 
-
 init_db()
 
+
+# ------------------------------
+# HOME PAGE
+# ------------------------------
 
 @app.route("/")
 def home():
     return render_template("index.html")
 
 
-def send_email(to_email,name):
+# ------------------------------
+# SEND EMAIL FUNCTION
+# ------------------------------
 
-    subject="Your Content Planning Request Received"
+def send_email(to_email,name,content_type):
+
+    price = PRICING.get(content_type)
 
     body=f"""
 Hello {name},
 
-Thank you for submitting your content request to ContentForge.
+Thank you for submitting your {content_type} request.
 
-Our editorial planning team has received your request and will now review your requirements to prepare a structured content planning sheet tailored to your topic, audience, and SEO objectives.
+Our editorial team has received your topic and will now begin preparing a fully SEO-optimised article tailored specifically to your subject and target audience.
 
-Our process follows a professional editorial workflow used by leading content agencies:
+At ContentForge, every article is prepared through a structured editorial process designed to produce content that is both search-optimized and reader-friendly.
 
-Request Received
-↓
-Content Planning Sheet Prepared
-↓
-Editorial Review
-↓
-Human Written Content Development
+------------------------------------------------------------
 
-This process ensures every article is structured strategically for readability, SEO performance, and audience engagement.
+What Happens Next
 
-If additional clarification is required, our team may contact you before drafting begins.
+1. Your request will first be reviewed by our editorial planner to understand the topic, audience, and SEO direction.
 
-Best regards,
+2. A fully SEO-optimised article will be prepared based on your topic.
+
+3. The article will be shared with you within approximately 2 hours.
+
+Preparing the article requires time because our team collects and integrates several components to ensure the final output is professionally structured and visually engaging.
+
+This preparation includes:
+
+• Featured image concepts
+• Supporting diagrams and visual explanations
+• Comparison tables where applicable
+• SEO-optimized headings and content structure
+• Structured data elements for improved search visibility
+• Supporting examples and explanatory sections
+
+All these elements are assembled together so that the article is ready for publishing and optimized for search performance.
+
+------------------------------------------------------------
+
+Article Preview Access
+
+The article you receive will contain:
+
+• Complete article structure
+• Real SEO-optimised writing style
+• Professional formatting with headings and sections
+
+For new clients evaluating our service, 25% of the article will be visible for preview.
+
+The remaining sections remain locked until a content subscription plan is activated.
+
+------------------------------------------------------------
+
+Content Delivery Package
+
+Each order produces a professional package:
+
+ContentForge_Order_1042
+
+Article.docx
+SEO_Package.txt
+Visual_Content_Plan.txt
+Repurposing_Ideas.txt
+
+------------------------------------------------------------
+
+Content Plans for {content_type}
+
+Single Order
+{price['single']}
+
+Professional Plan
+{price['plan10']}
+
+Growth Plan
+{price['plan15']}
+
+------------------------------------------------------------
+
+Once a subscription plan is activated, all articles are delivered fully unlocked along with the complete Content Delivery Package.
+
+Your article is currently in the editorial preparation stage and will be shared with you shortly.
+
+Best regards
 ContentForge Editorial Team
 """
 
     msg=MIMEText(body)
-    msg["Subject"]=subject
+
+    msg["Subject"]="Your ContentForge Request Has Been Received — Editorial Preparation in Progress"
+
     msg["From"]=EMAIL_USER
+
     msg["To"]=to_email
 
     server=smtplib.SMTP("smtp.gmail.com",587)
@@ -91,91 +232,58 @@ ContentForge Editorial Team
     server.quit()
 
 
-@app.route("/submit", methods=["POST"])
+# ------------------------------
+# FORM SUBMISSION
+# ------------------------------
+
+@app.route("/submit",methods=["POST"])
+
 def submit():
 
     data=request.get_json()
 
-    required=["name","email","type","topic","audience","length"]
+    name=data.get("name")
+    email=data.get("email")
+    content_type=data.get("type")
 
-    for field in required:
+    conn=get_connection()
+    cur=conn.cursor()
 
-        if not data.get(field):
+    cur.execute(
+    """
+    INSERT INTO orders
+    (customer_name,customer_email,content_type,topic,audience,length,keywords,brand,instructions)
+    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+    """,
+    (
+    name,
+    email,
+    content_type,
+    data.get("topic"),
+    data.get("audience"),
+    data.get("length"),
+    data.get("keywords"),
+    data.get("brand"),
+    data.get("details")
+    )
+    )
 
-            return jsonify({
-                "status":"error",
-                "message":f"The field '{field}' is required."
-            })
+    conn.commit()
 
-    try:
+    cur.close()
+    conn.close()
 
-        conn=get_connection()
-        cur=conn.cursor()
+    send_email(email,name,content_type)
 
-        cur.execute(
-        """
-        INSERT INTO orders
-        (customer_name,customer_email,content_type,topic,audience,length,keywords,brand,instructions)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
-        """,
-        (
-        data.get("name"),
-        data.get("email"),
-        data.get("type"),
-        data.get("topic"),
-        data.get("audience"),
-        data.get("length"),
-        data.get("keywords"),
-        data.get("brand"),
-        data.get("details")
-        )
-        )
-
-        conn.commit()
-
-        cur.close()
-        conn.close()
-
-        send_email(data.get("email"),data.get("name"))
-
-        return jsonify({
-        "status":"success",
-        "message":"Your request has been submitted successfully. Please check your email."
-        })
-
-    except Exception as e:
-
-        return jsonify({
-        "status":"error",
-        "message":"System error while saving request."
-        })
+    return jsonify({
+    "status":"success",
+    "message":"Request submitted successfully. Please check your email."
+    })
 
 
-@app.route("/keywords", methods=["POST"])
-def keywords():
-
-    data=request.get_json()
-
-    topic=data.get("topic","").lower()
-
-    if not topic:
-        return jsonify({"keywords":[]})
-
-    suggestions=[
-    topic,
-    f"best {topic}",
-    f"{topic} guide",
-    f"{topic} comparison",
-    f"top {topic}",
-    f"{topic} benefits",
-    f"{topic} for beginners",
-    f"how to choose {topic}",
-    f"{topic} tools",
-    f"{topic} alternatives"
-    ]
-
-    return jsonify({"keywords":suggestions})
-
+# ------------------------------
+# RUN SERVER
+# ------------------------------
 
 if __name__=="__main__":
 
