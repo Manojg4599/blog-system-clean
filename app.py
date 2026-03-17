@@ -12,17 +12,17 @@ EMAIL_PASS = os.getenv("EMAIL_PASS")
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
 
 
-# -----------------------------
+# -------------------------
 # DATABASE CONNECTION
-# -----------------------------
+# -------------------------
 
 def db():
     return psycopg2.connect(DB_URL, sslmode="require")
 
 
-# -----------------------------
+# -------------------------
 # PRICING TABLE
-# -----------------------------
+# -------------------------
 
 PRICING = {
 
@@ -40,16 +40,16 @@ PRICING = {
 }
 
 
-# -----------------------------
+# -------------------------
 # CREATE DATABASE TABLE
-# -----------------------------
+# -------------------------
 
 def init_db():
 
     try:
 
-        conn=db()
-        cur=conn.cursor()
+        conn = db()
+        cur = conn.cursor()
 
         cur.execute("""
 
@@ -76,28 +76,29 @@ def init_db():
         conn.close()
 
     except Exception as e:
-        print("DB INIT ERROR:",e)
+
+        print("DB INIT ERROR:", e)
 
 
 init_db()
 
 
-# -----------------------------
-# CLIENT EMAIL
-# -----------------------------
+# -------------------------
+# SEND EMAIL TO CLIENT
+# -------------------------
 
 def send_email(name,email,ctype):
 
     try:
 
-        price=PRICING.get(ctype)
+        price = PRICING.get(ctype)
 
-        body=f"""
+        body = f"""
 Hello {name},
 
 Thank you for submitting your {ctype} request.
 
-Our editorial team is preparing your content.
+Our editorial team has received your request and is preparing your content.
 
 Preview Access:
 25% of the article will be visible for preview.
@@ -110,16 +111,17 @@ Single Article: {price[0]}
 
 15 Articles Monthly Plan: {price[2]}
 
+Best Regards
 ContentForge Editorial Team
 """
 
-        msg=MIMEText(body)
+        msg = MIMEText(body)
 
-        msg["Subject"]="ContentForge Request Received"
-        msg["From"]=EMAIL_USER
-        msg["To"]=email
+        msg["Subject"] = "ContentForge Request Received"
+        msg["From"] = EMAIL_USER
+        msg["To"] = email
 
-        s=smtplib.SMTP("smtp.gmail.com",587)
+        s = smtplib.SMTP("smtp.gmail.com",587)
         s.starttls()
         s.login(EMAIL_USER,EMAIL_PASS)
         s.send_message(msg)
@@ -130,36 +132,36 @@ ContentForge Editorial Team
         print("CLIENT EMAIL ERROR:",e)
 
 
-# -----------------------------
+# -------------------------
 # ADMIN NOTIFICATION EMAIL
-# -----------------------------
+# -------------------------
 
 def notify_admin(data):
 
     try:
 
-        body=f"""
+        body = f"""
 
-New Request Received
+New Content Request
 
-Name: {data['name']}
-Email: {data['email']}
-Content Type: {data['type']}
-Topic: {data['topic']}
-Audience: {data['audience']}
-Keywords: {data['keywords']}
-Brand: {data['brand']}
-Website: {data['website']}
+Name: {data.get('name')}
+Email: {data.get('email')}
+Content Type: {data.get('type')}
+Topic: {data.get('topic')}
+Audience: {data.get('audience')}
+Keywords: {data.get('keywords')}
+Brand: {data.get('brand')}
+Website: {data.get('website')}
 
 """
 
-        msg=MIMEText(body)
+        msg = MIMEText(body)
 
-        msg["Subject"]="New ContentForge Request"
-        msg["From"]=EMAIL_USER
-        msg["To"]=ADMIN_EMAIL
+        msg["Subject"] = "New ContentForge Request"
+        msg["From"] = EMAIL_USER
+        msg["To"] = ADMIN_EMAIL
 
-        s=smtplib.SMTP("smtp.gmail.com",587)
+        s = smtplib.SMTP("smtp.gmail.com",587)
         s.starttls()
         s.login(EMAIL_USER,EMAIL_PASS)
         s.send_message(msg)
@@ -170,28 +172,50 @@ Website: {data['website']}
         print("ADMIN EMAIL ERROR:",e)
 
 
-# -----------------------------
+# -------------------------
 # HOME PAGE
-# -----------------------------
+# -------------------------
 
 @app.route("/")
 def home():
+
     return render_template("index.html")
 
 
-# -----------------------------
+# -------------------------
 # FORM SUBMISSION
-# -----------------------------
+# -------------------------
 
-@app.route("/submit",methods=["POST"])
+@app.route("/submit", methods=["POST"])
 def submit():
 
     try:
 
-        data=request.get_json()
+        data = request.get_json()
 
-        conn=db()
-        cur=conn.cursor()
+        if not data:
+
+            return jsonify({"error":"No form data received"}),400
+
+
+        name = data.get("name")
+        email = data.get("email")
+        ctype = data.get("type")
+        topic = data.get("topic")
+        audience = data.get("audience")
+        keywords = data.get("keywords")
+        brand = data.get("brand")
+        website = data.get("website")
+        details = data.get("details")
+
+
+        if not name or not email or not topic:
+
+            return jsonify({"error":"Required fields missing"}),400
+
+
+        conn = db()
+        cur = conn.cursor()
 
         cur.execute("""
 
@@ -204,15 +228,15 @@ def submit():
 
         (
 
-        data["name"],
-        data["email"],
-        data["type"],
-        data["topic"],
-        data["audience"],
-        data["keywords"],
-        data["brand"],
-        data["website"],
-        data["details"]
+        name,
+        email,
+        ctype,
+        topic,
+        audience,
+        keywords,
+        brand,
+        website,
+        details
 
         )
 
@@ -223,10 +247,13 @@ def submit():
         cur.close()
         conn.close()
 
-        send_email(data["name"],data["email"],data["type"])
+
+        send_email(name,email,ctype)
         notify_admin(data)
 
+
         return jsonify({"success":True})
+
 
     except Exception as e:
 
@@ -235,11 +262,12 @@ def submit():
         return jsonify({"error":"Server failure"}),500
 
 
-# -----------------------------
+# -------------------------
 # RUN SERVER
-# -----------------------------
+# -------------------------
 
-if __name__=="__main__":
+if __name__ == "__main__":
 
-    port=int(os.environ.get("PORT",10000))
+    port = int(os.environ.get("PORT",10000))
+
     app.run(host="0.0.0.0",port=port)
