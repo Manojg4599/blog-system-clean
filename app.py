@@ -12,9 +12,17 @@ EMAIL_PASS = os.getenv("EMAIL_PASS")
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
 
 
-def db():
-    return psycopg2.connect(DB_URL)
+# -----------------------------
+# DATABASE CONNECTION
+# -----------------------------
 
+def db():
+    return psycopg2.connect(DB_URL, sslmode="require")
+
+
+# -----------------------------
+# PRICING TABLE
+# -----------------------------
 
 PRICING = {
 
@@ -28,98 +36,109 @@ PRICING = {
 "Speech":("₹1500","₹12000 / month (10)","₹17000 / month (15)"),
 "Essay":("₹900","₹7000 / month (10)","₹9500 / month (15)"),
 "Official Letter":("₹700","₹5500 / month (10)","₹7500 / month (15)")
+
 }
 
 
+# -----------------------------
+# CREATE DATABASE TABLE
+# -----------------------------
+
 def init_db():
 
-    conn=db()
-    cur=conn.cursor()
+    try:
 
-    cur.execute("""
+        conn=db()
+        cur=conn.cursor()
 
-    CREATE TABLE IF NOT EXISTS orders(
+        cur.execute("""
 
-    id SERIAL PRIMARY KEY,
-    name TEXT,
-    email TEXT,
-    content_type TEXT,
-    topic TEXT,
-    audience TEXT,
-    keywords TEXT,
-    brand TEXT,
-    website TEXT,
-    instructions TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        CREATE TABLE IF NOT EXISTS orders(
 
-    )
+        id SERIAL PRIMARY KEY,
+        name TEXT,
+        email TEXT,
+        content_type TEXT,
+        topic TEXT,
+        audience TEXT,
+        keywords TEXT,
+        brand TEXT,
+        website TEXT,
+        instructions TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
-    """)
+        )
 
-    conn.commit()
-    cur.close()
-    conn.close()
+        """)
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+    except Exception as e:
+        print("DB INIT ERROR:",e)
+
 
 init_db()
 
 
+# -----------------------------
+# CLIENT EMAIL
+# -----------------------------
+
 def send_email(name,email,ctype):
 
-    price=PRICING.get(ctype)
+    try:
 
-    body=f"""
+        price=PRICING.get(ctype)
+
+        body=f"""
 Hello {name},
 
 Thank you for submitting your {ctype} request.
 
-Our editorial team has received your topic and will now begin preparing a fully SEO-optimised article tailored specifically to your subject and target audience.
+Our editorial team is preparing your content.
 
-What Happens Next
-
-1. Your request will be reviewed by our editorial planner.
-2. A fully SEO-optimised article will be prepared.
-3. The article will be shared within approximately 2 hours.
-
-Article Preview Access
-
+Preview Access:
 25% of the article will be visible for preview.
-Remaining sections unlock once a subscription plan is activated.
 
-Content Delivery Package
+Content Plans:
 
-Article.docx
-SEO_Package.txt
-Visual_Content_Plan.txt
-Repurposing_Ideas.txt
+Single Article: {price[0]}
 
-Content Plans
+10 Articles Monthly Plan: {price[1]}
 
-Single Order: {price[0]}
+15 Articles Monthly Plan: {price[2]}
 
-Professional Plan: {price[1]}
-
-Growth Plan: {price[2]}
-
-Best Regards
 ContentForge Editorial Team
 """
 
-    msg=MIMEText(body)
+        msg=MIMEText(body)
 
-    msg["Subject"]="Your ContentForge Request Has Been Received"
-    msg["From"]=EMAIL_USER
-    msg["To"]=email
+        msg["Subject"]="ContentForge Request Received"
+        msg["From"]=EMAIL_USER
+        msg["To"]=email
 
-    s=smtplib.SMTP("smtp.gmail.com",587)
-    s.starttls()
-    s.login(EMAIL_USER,EMAIL_PASS)
-    s.send_message(msg)
-    s.quit()
+        s=smtplib.SMTP("smtp.gmail.com",587)
+        s.starttls()
+        s.login(EMAIL_USER,EMAIL_PASS)
+        s.send_message(msg)
+        s.quit()
 
+    except Exception as e:
+
+        print("CLIENT EMAIL ERROR:",e)
+
+
+# -----------------------------
+# ADMIN NOTIFICATION EMAIL
+# -----------------------------
 
 def notify_admin(data):
 
-    body=f"""
+    try:
+
+        body=f"""
 
 New Request Received
 
@@ -134,79 +153,91 @@ Website: {data['website']}
 
 """
 
-    msg=MIMEText(body)
+        msg=MIMEText(body)
 
-    msg["Subject"]="New ContentForge Request"
-    msg["From"]=EMAIL_USER
-    msg["To"]=ADMIN_EMAIL
+        msg["Subject"]="New ContentForge Request"
+        msg["From"]=EMAIL_USER
+        msg["To"]=ADMIN_EMAIL
 
-    s=smtplib.SMTP("smtp.gmail.com",587)
-    s.starttls()
-    s.login(EMAIL_USER,EMAIL_PASS)
-    s.send_message(msg)
-    s.quit()
+        s=smtplib.SMTP("smtp.gmail.com",587)
+        s.starttls()
+        s.login(EMAIL_USER,EMAIL_PASS)
+        s.send_message(msg)
+        s.quit()
 
+    except Exception as e:
+
+        print("ADMIN EMAIL ERROR:",e)
+
+
+# -----------------------------
+# HOME PAGE
+# -----------------------------
 
 @app.route("/")
 def home():
     return render_template("index.html")
 
 
+# -----------------------------
+# FORM SUBMISSION
+# -----------------------------
+
 @app.route("/submit",methods=["POST"])
 def submit():
 
-    data=request.get_json()
+    try:
 
-    if not data["name"]:
-        return jsonify({"error":"Name required"})
+        data=request.get_json()
 
-    if not data["email"]:
-        return jsonify({"error":"Email required"})
+        conn=db()
+        cur=conn.cursor()
 
-    if not data["topic"]:
-        return jsonify({"error":"Topic required"})
+        cur.execute("""
 
-    if not data["keywords"]:
-        return jsonify({"error":"SEO Keywords required"})
+        INSERT INTO orders
+        (name,email,content_type,topic,audience,keywords,brand,website,instructions)
+
+        VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)
+
+        """,
+
+        (
+
+        data["name"],
+        data["email"],
+        data["type"],
+        data["topic"],
+        data["audience"],
+        data["keywords"],
+        data["brand"],
+        data["website"],
+        data["details"]
+
+        )
+
+        )
+
+        conn.commit()
+
+        cur.close()
+        conn.close()
+
+        send_email(data["name"],data["email"],data["type"])
+        notify_admin(data)
+
+        return jsonify({"success":True})
+
+    except Exception as e:
+
+        print("SERVER ERROR:",e)
+
+        return jsonify({"error":"Server failure"}),500
 
 
-    conn=db()
-    cur=conn.cursor()
-
-    cur.execute("""
-
-    INSERT INTO orders
-    (name,email,content_type,topic,audience,keywords,brand,website,instructions)
-
-    VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)
-
-    """,
-
-    (
-
-    data["name"],
-    data["email"],
-    data["type"],
-    data["topic"],
-    data["audience"],
-    data["keywords"],
-    data["brand"],
-    data["website"],
-    data["details"]
-
-    )
-
-    )
-
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    send_email(data["name"],data["email"],data["type"])
-    notify_admin(data)
-
-    return jsonify({"success":True})
-
+# -----------------------------
+# RUN SERVER
+# -----------------------------
 
 if __name__=="__main__":
 
