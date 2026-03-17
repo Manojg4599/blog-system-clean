@@ -11,29 +11,29 @@ EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASS = os.getenv("EMAIL_PASS")
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
 
-def get_connection():
+
+def db():
     return psycopg2.connect(DB_URL)
 
 
 PRICING = {
 
-"Blog Article":("₹1,050","₹8,500 / month (10)","₹12,000 / month (15)"),
-"SEO Landing Page":("₹1,250","₹10,000 / month (10)","₹14,000 / month (15)"),
-"Comparison Article":("₹1,150","₹9,200 / month (10)","₹13,000 / month (15)"),
-"Educational Guide":("₹1,350","₹10,800 / month (10)","₹15,000 / month (15)"),
-"FAQ Page":("₹900","₹7,200 / month (10)","₹10,000 / month (15)"),
-"Tool Page":("₹1,200","₹9,500 / month (10)","₹13,500 / month (15)"),
-"Directory Page":("₹1,100","₹8,800 / month (10)","₹12,500 / month (15)"),
-"Speech":("₹1,500","₹12,000 / month (10)","₹17,000 / month (15)"),
-"Essay":("₹900","₹7,000 / month (10)","₹9,500 / month (15)"),
-"Official Letter":("₹700","₹5,500 / month (10)","₹7,500 / month (15)")
-
+"Blog Article":("₹1050","₹8500 / month (10)","₹12000 / month (15)"),
+"SEO Landing Page":("₹1250","₹10000 / month (10)","₹14000 / month (15)"),
+"Comparison Article":("₹1150","₹9200 / month (10)","₹13000 / month (15)"),
+"Educational Guide":("₹1350","₹10800 / month (10)","₹15000 / month (15)"),
+"FAQ Page":("₹900","₹7200 / month (10)","₹10000 / month (15)"),
+"Tool Page":("₹1200","₹9500 / month (10)","₹13500 / month (15)"),
+"Directory Page":("₹1100","₹8800 / month (10)","₹12500 / month (15)"),
+"Speech":("₹1500","₹12000 / month (10)","₹17000 / month (15)"),
+"Essay":("₹900","₹7000 / month (10)","₹9500 / month (15)"),
+"Official Letter":("₹700","₹5500 / month (10)","₹7500 / month (15)")
 }
 
 
 def init_db():
 
-    conn=get_connection()
+    conn=db()
     cur=conn.cursor()
 
     cur.execute("""
@@ -63,23 +63,26 @@ def init_db():
 init_db()
 
 
-def send_client_email(name,email,content_type):
+def send_email(name,email,ctype):
 
-    price=PRICING.get(content_type)
+    price=PRICING.get(ctype)
 
     body=f"""
-
 Hello {name},
 
-Thank you for submitting your {content_type} request.
+Thank you for submitting your {ctype} request.
 
-Our editorial team will now prepare a fully SEO optimised article based on your topic.
+Our editorial team has received your topic and will now begin preparing a fully SEO-optimised article tailored specifically to your subject and target audience.
 
-The article will be delivered within approximately 2 hours.
+What Happens Next
 
-Preview Access
-25% of the article will be visible so that you can evaluate writing quality.
+1. Your request will be reviewed by our editorial planner.
+2. A fully SEO-optimised article will be prepared.
+3. The article will be shared within approximately 2 hours.
 
+Article Preview Access
+
+25% of the article will be visible for preview.
 Remaining sections unlock once a subscription plan is activated.
 
 Content Delivery Package
@@ -89,48 +92,36 @@ SEO_Package.txt
 Visual_Content_Plan.txt
 Repurposing_Ideas.txt
 
-
 Content Plans
 
-Single Article
-{price[0]}
+Single Order: {price[0]}
 
-Professional Plan
-{price[1]}
+Professional Plan: {price[1]}
 
-Growth Plan
-{price[2]}
+Growth Plan: {price[2]}
 
 Best Regards
 ContentForge Editorial Team
-
 """
 
     msg=MIMEText(body)
 
-    msg["Subject"]="ContentForge Request Received"
+    msg["Subject"]="Your ContentForge Request Has Been Received"
     msg["From"]=EMAIL_USER
     msg["To"]=email
 
-    server=smtplib.SMTP("smtp.gmail.com",587)
-    server.starttls()
-    server.login(EMAIL_USER,EMAIL_PASS)
-    server.send_message(msg)
-    server.quit()
+    s=smtplib.SMTP("smtp.gmail.com",587)
+    s.starttls()
+    s.login(EMAIL_USER,EMAIL_PASS)
+    s.send_message(msg)
+    s.quit()
 
 
-def send_admin_email(data):
-
-    website_link = data["website"]
-
-    if website_link:
-        website_display=f"<a href='{website_link}'>{website_link}</a>"
-    else:
-        website_display="Not Provided"
+def notify_admin(data):
 
     body=f"""
 
-New Content Request
+New Request Received
 
 Name: {data['name']}
 Email: {data['email']}
@@ -139,21 +130,21 @@ Topic: {data['topic']}
 Audience: {data['audience']}
 Keywords: {data['keywords']}
 Brand: {data['brand']}
-Website: {website_display}
+Website: {data['website']}
 
 """
 
-    msg=MIMEText(body,"html")
+    msg=MIMEText(body)
 
     msg["Subject"]="New ContentForge Request"
     msg["From"]=EMAIL_USER
     msg["To"]=ADMIN_EMAIL
 
-    server=smtplib.SMTP("smtp.gmail.com",587)
-    server.starttls()
-    server.login(EMAIL_USER,EMAIL_PASS)
-    server.send_message(msg)
-    server.quit()
+    s=smtplib.SMTP("smtp.gmail.com",587)
+    s.starttls()
+    s.login(EMAIL_USER,EMAIL_PASS)
+    s.send_message(msg)
+    s.quit()
 
 
 @app.route("/")
@@ -166,14 +157,20 @@ def submit():
 
     data=request.get_json()
 
-    required=["name","email","topic","keywords"]
+    if not data["name"]:
+        return jsonify({"error":"Name required"})
 
-    for r in required:
-        if not data.get(r):
-            return jsonify({"error":f"{r} is required"})
+    if not data["email"]:
+        return jsonify({"error":"Email required"})
+
+    if not data["topic"]:
+        return jsonify({"error":"Topic required"})
+
+    if not data["keywords"]:
+        return jsonify({"error":"SEO Keywords required"})
 
 
-    conn=get_connection()
+    conn=db()
     cur=conn.cursor()
 
     cur.execute("""
@@ -205,8 +202,8 @@ def submit():
     cur.close()
     conn.close()
 
-    send_client_email(data["name"],data["email"],data["type"])
-    send_admin_email(data)
+    send_email(data["name"],data["email"],data["type"])
+    notify_admin(data)
 
     return jsonify({"success":True})
 
