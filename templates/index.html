@@ -55,6 +55,11 @@ border-radius:4px;
 cursor:pointer
 }
 
+#msg{
+margin-top:20px;
+font-weight:bold
+}
+
 </style>
 
 </head>
@@ -91,7 +96,18 @@ cursor:pointer
 <label>4. Topic <span class="required">*</span></label>
 <input id="topic" oninput="genKeywords()">
 
-<label>5. Target Audience</label>
+<label>5. Content Length</label>
+
+<select id="length">
+
+<option>800–1000 words</option>
+<option>1200–1500 words</option>
+<option>1800–2000 words</option>
+<option>Custom</option>
+
+</select>
+
+<label>6. Target Audience</label>
 
 <select id="audience">
 
@@ -103,19 +119,30 @@ cursor:pointer
 
 </select>
 
-<label>6. SEO Keywords <span class="required">*</span></label>
-<textarea id="keywords"></textarea>
+<label>7. SEO Keywords <span class="required">*</span></label>
+
+<textarea id="keywords" placeholder="Keywords will appear here separated by commas"></textarea>
 
 <div id="suggestions"></div>
 
-<label>7. Business / Brand Name</label>
-<input id="brand" placeholder="Example: ABC Ltd.">
+<label>8. Business / Brand Name</label>
 
-<label>8. Website URL (optional)</label>
-<input id="website">
+<input id="brand" placeholder="Example: ABC Ltd. or Personal Brand Name">
 
-<label>9. Additional Instructions</label>
-<textarea id="details"></textarea>
+<label>9. Website URL (optional)</label>
+
+<input id="website" placeholder="https://example.com">
+
+<label>10. Additional Instructions</label>
+
+<textarea id="details"
+placeholder="Example:
+• competitor website links
+• preferred tone (professional / casual)
+• country or region target
+• specific product/service to highlight
+• references or resources to include
+"></textarea>
 
 <button onclick="submitForm()">Submit Request</button>
 
@@ -127,13 +154,15 @@ cursor:pointer
 
 function genKeywords(){
 
-let topic=document.getElementById("topic").value
+let topic=document.getElementById("topic").value.trim()
 
-let mods=["guide","tips","strategies","examples","tools","for beginners","2025","case study"]
+let mods=["guide","tips","strategies","tools","examples","for beginners","2025","case study"]
 
 let box=document.getElementById("suggestions")
 
 box.innerHTML=""
+
+if(topic.length<3)return
 
 mods.forEach(m=>{
 
@@ -147,7 +176,13 @@ span.innerText=kw
 
 span.onclick=function(){
 
-document.getElementById("keywords").value+=kw+"\\n"
+let field=document.getElementById("keywords")
+
+if(field.value===""){
+field.value=kw
+}else{
+field.value+=", "+kw
+}
 
 }
 
@@ -157,10 +192,11 @@ box.appendChild(span)
 
 }
 
-
 function submitForm(){
 
-document.getElementById("msg").innerText="Submitting..."
+let msg=document.getElementById("msg")
+
+msg.innerText="Submitting request..."
 
 let data={
 
@@ -190,13 +226,19 @@ body:JSON.stringify(data)
 
 if(d.success){
 
-msg.innerText="Request submitted successfully"
+msg.innerText="✔ Request submitted successfully."
 
 }else{
 
-msg.innerText=d.error
+msg.innerText="⚠ "+d.error
 
 }
+
+})
+
+.catch(()=>{
+
+msg.innerText="⚠ Server error. Please try again."
 
 })
 
