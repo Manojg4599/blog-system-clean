@@ -42,47 +42,17 @@ border-radius:6px;
 cursor:pointer
 }
 
-button:hover{
-background:#0f5bd4
-}
-
 .required{
 color:red
 }
 
-.success{
-display:none;
-background:#e6f4ea;
-padding:15px;
-border-radius:6px
-}
-
-.error{
-display:none;
-background:#fce8e6;
-padding:15px;
-border-radius:6px
-}
-
-.keywordBox{
-background:#f8f9fa;
-padding:15px;
-border-radius:6px;
-margin-bottom:20px
-}
-
 .keyword{
-display:inline-block;
 background:#e8f0fe;
 padding:6px 10px;
 margin:5px;
+display:inline-block;
 border-radius:4px;
-cursor:pointer;
-font-size:13px
-}
-
-.keyword:hover{
-background:#d2e3fc
+cursor:pointer
 }
 
 </style>
@@ -118,11 +88,8 @@ background:#d2e3fc
 
 </select>
 
-
-<label>4. Topic / Title <span class="required">*</span></label>
-
-<input id="topic" placeholder="Example: Digital Marketing for Small Businesses" oninput="generateKeywords()">
-
+<label>4. Topic <span class="required">*</span></label>
+<input id="topic" oninput="genKeywords()">
 
 <label>5. Target Audience</label>
 
@@ -133,85 +100,42 @@ background:#d2e3fc
 <option>Startup Founders</option>
 <option>Marketing Professionals</option>
 <option>Students</option>
-<option>Corporate Professionals</option>
 
 </select>
 
-
 <label>6. SEO Keywords <span class="required">*</span></label>
+<textarea id="keywords"></textarea>
 
-<textarea id="keywords"
-placeholder="Click suggested keywords below to add them"></textarea>
-
-
-<div class="keywordBox">
-
-<b>Suggested SEO Keywords</b>
-
-<div id="keywordSuggestions"></div>
-
-</div>
-
+<div id="suggestions"></div>
 
 <label>7. Business / Brand Name</label>
+<input id="brand" placeholder="Example: ABC Ltd.">
 
-<input id="brand" placeholder="Example: ABC Ltd. or Personal Brand">
-
-
-<label>8. Website URL (Optional)</label>
-
-<input id="website" placeholder="https://yourwebsite.com">
-
+<label>8. Website URL (optional)</label>
+<input id="website">
 
 <label>9. Additional Instructions</label>
-
 <textarea id="details"></textarea>
-
 
 <button onclick="submitForm()">Submit Request</button>
 
-<div class="success" id="success">
-Your request has been submitted successfully. Please check your email.
-</div>
-
-<div class="error" id="error"></div>
+<div id="msg"></div>
 
 </div>
 
 <script>
 
-
-function generateKeywords(){
+function genKeywords(){
 
 let topic=document.getElementById("topic").value
 
-if(topic.length<3) return
+let mods=["guide","tips","strategies","examples","tools","for beginners","2025","case study"]
 
-let modifiers=[
+let box=document.getElementById("suggestions")
 
-"best",
-"guide",
-"tips",
-"strategies",
-"examples",
-"for beginners",
-"for business",
-"for startups",
-"2025",
-"tools",
-"how to",
-"complete guide",
-"step by step",
-"benefits",
-"case study"
+box.innerHTML=""
 
-]
-
-let container=document.getElementById("keywordSuggestions")
-
-container.innerHTML=""
-
-modifiers.forEach(m=>{
+mods.forEach(m=>{
 
 let kw=topic+" "+m
 
@@ -223,33 +147,32 @@ span.innerText=kw
 
 span.onclick=function(){
 
-let textarea=document.getElementById("keywords")
-
-textarea.value+=kw+"\n"
+document.getElementById("keywords").value+=kw+"\\n"
 
 }
 
-container.appendChild(span)
+box.appendChild(span)
 
 })
 
 }
 
 
-
 function submitForm(){
+
+document.getElementById("msg").innerText="Submitting..."
 
 let data={
 
-name:document.getElementById("name").value,
-email:document.getElementById("email").value,
-type:document.getElementById("type").value,
-topic:document.getElementById("topic").value,
-audience:document.getElementById("audience").value,
-keywords:document.getElementById("keywords").value,
-brand:document.getElementById("brand").value,
-website:document.getElementById("website").value,
-details:document.getElementById("details").value
+name:name.value,
+email:email.value,
+type:type.value,
+topic:topic.value,
+audience:audience.value,
+keywords:keywords.value,
+brand:brand.value,
+website:website.value,
+details:details.value
 
 }
 
@@ -261,23 +184,17 @@ body:JSON.stringify(data)
 
 })
 
-.then(res=>res.json())
+.then(r=>r.json())
 
-.then(data=>{
+.then(d=>{
 
-if(data.success){
+if(d.success){
 
-document.getElementById("success").style.display="block"
-window.scrollTo(0,0)
+msg.innerText="Request submitted successfully"
 
-}
+}else{
 
-if(data.error){
-
-let e=document.getElementById("error")
-e.innerText=data.error
-e.style.display="block"
-window.scrollTo(0,0)
+msg.innerText=d.error
 
 }
 
@@ -288,5 +205,4 @@ window.scrollTo(0,0)
 </script>
 
 </body>
-
 </html>
