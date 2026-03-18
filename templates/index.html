@@ -42,10 +42,6 @@ border-radius:6px;
 cursor:pointer
 }
 
-.required{
-color:red
-}
-
 .keyword{
 background:#e8f0fe;
 padding:6px 10px;
@@ -53,11 +49,6 @@ margin:5px;
 display:inline-block;
 border-radius:4px;
 cursor:pointer
-}
-
-#msg{
-margin-top:20px;
-font-weight:bold
 }
 
 </style>
@@ -70,15 +61,17 @@ font-weight:bold
 
 <h2>ContentForge Content Request</h2>
 
-<label>1. Your Name <span class="required">*</span></label>
-<input id="name" placeholder="Example: John Smith">
+<form action="/submit" method="POST">
 
-<label>2. Email Address <span class="required">*</span></label>
-<input id="email" placeholder="example@email.com">
+<label>1. Your Name *</label>
+<input name="name" required>
+
+<label>2. Email Address *</label>
+<input name="email" required>
 
 <label>3. Content Type</label>
 
-<select id="type">
+<select name="type">
 
 <option>Blog Article</option>
 <option>SEO Landing Page</option>
@@ -93,23 +86,12 @@ font-weight:bold
 
 </select>
 
-<label>4. Topic <span class="required">*</span></label>
-<input id="topic" oninput="genKeywords()">
+<label>4. Topic *</label>
+<input name="topic" id="topic" required oninput="keywords()">
 
-<label>5. Content Length</label>
+<label>5. Target Audience</label>
 
-<select id="length">
-
-<option>800–1000 words</option>
-<option>1200–1500 words</option>
-<option>1800–2000 words</option>
-<option>Custom</option>
-
-</select>
-
-<label>6. Target Audience</label>
-
-<select id="audience">
+<select name="audience">
 
 <option>General Audience</option>
 <option>Business Owners</option>
@@ -119,52 +101,40 @@ font-weight:bold
 
 </select>
 
-<label>7. SEO Keywords <span class="required">*</span></label>
+<label>6. SEO Keywords *</label>
 
-<textarea id="keywords" placeholder="Keywords will appear here separated by commas"></textarea>
+<textarea name="keywords" id="keywords" required></textarea>
 
 <div id="suggestions"></div>
 
-<label>8. Business / Brand Name</label>
+<label>7. Business / Brand Name</label>
+<input name="brand">
 
-<input id="brand" placeholder="Example: ABC Ltd. or Personal Brand Name">
+<label>8. Website URL</label>
+<input name="website">
 
-<label>9. Website URL (optional)</label>
+<label>9. Additional Instructions</label>
+<textarea name="details"></textarea>
 
-<input id="website" placeholder="https://example.com">
+<button type="submit">Submit Request</button>
 
-<label>10. Additional Instructions</label>
-
-<textarea id="details"
-placeholder="Example:
-• competitor website links
-• preferred tone (professional / casual)
-• country or region target
-• specific product/service to highlight
-• references or resources to include
-"></textarea>
-
-<button onclick="submitForm()">Submit Request</button>
-
-<div id="msg"></div>
+</form>
 
 </div>
 
 <script>
 
-function genKeywords(){
+function keywords(){
 
-let topic=document.getElementById("topic").value.trim()
+let topic=document.getElementById("topic").value
 
-let mods=["guide","tips","strategies","tools","examples","for beginners","2025","case study"]
+let mods=["guide","tips","tools","examples","strategies","2025"]
 
 let box=document.getElementById("suggestions")
 
 box.innerHTML=""
 
-if(topic.length<3)return
-
-mods.forEach(m=>{
+mods.forEach(function(m){
 
 let kw=topic+" "+m
 
@@ -181,64 +151,12 @@ let field=document.getElementById("keywords")
 if(field.value===""){
 field.value=kw
 }else{
-field.value+=", "+kw
+field.value=field.value+", "+kw
 }
 
 }
 
 box.appendChild(span)
-
-})
-
-}
-
-function submitForm(){
-
-let msg=document.getElementById("msg")
-
-msg.innerText="Submitting request..."
-
-let data={
-
-name:name.value,
-email:email.value,
-type:type.value,
-topic:topic.value,
-audience:audience.value,
-keywords:keywords.value,
-brand:brand.value,
-website:website.value,
-details:details.value
-
-}
-
-fetch("/submit",{
-
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify(data)
-
-})
-
-.then(r=>r.json())
-
-.then(d=>{
-
-if(d.success){
-
-msg.innerText="✔ Request submitted successfully."
-
-}else{
-
-msg.innerText="⚠ "+d.error
-
-}
-
-})
-
-.catch(()=>{
-
-msg.innerText="⚠ Server error. Please try again."
 
 })
 
