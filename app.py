@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, redirect
 import os
 import psycopg2
 import smtplib
@@ -12,225 +12,159 @@ EMAIL_PASS = os.getenv("EMAIL_PASS")
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
 
 
-# ----------------------------
-# DATABASE CONNECTION
-# ----------------------------
-
 def db():
     return psycopg2.connect(DB_URL, sslmode="require")
 
 
-# ----------------------------
-# CREATE TABLE
-# ----------------------------
+PRICING = {
+
+"Blog Article":("₹1050","₹8500 / month (10)","₹12000 / month (15)"),
+"SEO Landing Page":("₹1250","₹10000 / month (10)","₹14000 / month (15)"),
+"Comparison Article":("₹1150","₹9200 / month (10)","₹13000 / month (15)"),
+"Educational Guide":("₹1350","₹10800 / month (10)","₹15000 / month (15)"),
+"FAQ Page":("₹900","₹7200 / month (10)","₹10000 / month (15)"),
+"Tool Page":("₹1200","₹9500 / month (10)","₹13500 / month (15)"),
+"Directory Page":("₹1100","₹8800 / month (10)","₹12500 / month (15)"),
+"Speech":("₹1500","₹12000 / month (10)","₹17000 / month (15)"),
+"Essay":("₹900","₹7000 / month (10)","₹9500 / month (15)"),
+"Official Letter":("₹700","₹5500 / month (10)","₹7500 / month (15)")
+
+}
+
 
 def init_db():
 
-    try:
+    conn=db()
+    cur=conn.cursor()
 
-        conn = db()
-        cur = conn.cursor()
+    cur.execute("""
 
-        cur.execute("""
+    CREATE TABLE IF NOT EXISTS orders(
 
-        CREATE TABLE IF NOT EXISTS orders(
+    id SERIAL PRIMARY KEY,
+    name TEXT,
+    email TEXT,
+    content_type TEXT,
+    topic TEXT,
+    audience TEXT,
+    keywords TEXT,
+    brand TEXT,
+    website TEXT,
+    instructions TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
-        id SERIAL PRIMARY KEY,
-        name TEXT,
-        email TEXT,
-        content_type TEXT,
-        topic TEXT,
-        audience TEXT,
-        keywords TEXT,
-        brand TEXT,
-        website TEXT,
-        instructions TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
 
-        )
+    """)
 
-        """)
-
-        conn.commit()
-        cur.close()
-        conn.close()
-
-    except Exception as e:
-
-        print("DB INIT ERROR:", e)
+    conn.commit()
+    cur.close()
+    conn.close()
 
 
 init_db()
 
 
-# ----------------------------
-# SEND CLIENT EMAIL
-# ----------------------------
-
 def send_email(name,email,ctype):
 
     try:
 
-        body = f"""
+        price=PRICING.get(ctype)
+
+        body=f"""
 Hello {name},
 
 Thank you for submitting your {ctype} request.
 
-Our editorial team is preparing your content.
+Our editorial team is preparing your article.
 
 Preview Access
-Only 25% of the article will be visible initially.
+25% of the article will be visible initially.
+
+Content Plans
+
+Single Article: {price[0]}
+
+Professional Plan: {price[1]}
+
+Growth Plan: {price[2]}
 
 Best Regards
 ContentForge Editorial Team
 """
 
-        msg = MIMEText(body)
+        msg=MIMEText(body)
 
-        msg["Subject"] = "ContentForge Request Received"
-        msg["From"] = EMAIL_USER
-        msg["To"] = email
+        msg["Subject"]="ContentForge Request Received"
+        msg["From"]=EMAIL_USER
+        msg["To"]=email
 
-        s = smtplib.SMTP("smtp.gmail.com",587)
+        s=smtplib.SMTP("smtp.gmail.com",587)
         s.starttls()
         s.login(EMAIL_USER,EMAIL_PASS)
         s.send_message(msg)
         s.quit()
 
     except Exception as e:
-
         print("EMAIL ERROR:",e)
 
 
-# ----------------------------
-# ADMIN EMAIL
-# ----------------------------
-
-def notify_admin(data):
-
-    try:
-
-        body = f"""
-
-New Request Received
-
-Name: {data.get('name')}
-Email: {data.get('email')}
-Content Type: {data.get('type')}
-Topic: {data.get('topic')}
-Keywords: {data.get('keywords')}
-
-"""
-
-        msg = MIMEText(body)
-
-        msg["Subject"] = "New ContentForge Request"
-        msg["From"] = EMAIL_USER
-        msg["To"] = ADMIN_EMAIL
-
-        s = smtplib.SMTP("smtp.gmail.com",587)
-        s.starttls()
-        s.login(EMAIL_USER,EMAIL_PASS)
-        s.send_message(msg)
-        s.quit()
-
-    except Exception as e:
-
-        print("ADMIN EMAIL ERROR:",e)
-
-
-# ----------------------------
-# HOME PAGE
-# ----------------------------
-
 @app.route("/")
 def home():
-
     return render_template("index.html")
 
 
-# ----------------------------
-# FORM SUBMISSION
-# ----------------------------
-
-@app.route("/submit", methods=["POST"])
+@app.route("/submit",methods=["POST"])
 def submit():
 
-    try:
+    name=request.form.get("name")
+    email=request.form.get("email")
+    ctype=request.form.get("type")
+    topic=request.form.get("topic")
+    audience=request.form.get("audience")
+    keywords=request.form.get("keywords")
+    brand=request.form.get("brand")
+    website=request.form.get("website")
+    details=request.form.get("details")
 
-        # Accept JSON OR form data
-        data = request.get_json(silent=True)
+    if not name or not email or not topic or not keywords:
 
-        if not data:
-            data = request.form
-
-        name = data.get("name")
-        email = data.get("email")
-        ctype = data.get("type")
-        topic = data.get("topic")
-        audience = data.get("audience")
-        keywords = data.get("keywords")
-        brand = data.get("brand")
-        website = data.get("website")
-        details = data.get("details")
-
-        if not name or not email or not topic or not keywords:
-
-            return jsonify({"error":"Required fields missing"}),400
+        return "Required fields missing"
 
 
-        conn = db()
-        cur = conn.cursor()
+    conn=db()
+    cur=conn.cursor()
 
-        cur.execute("""
+    cur.execute("""
 
-        INSERT INTO orders
-        (name,email,content_type,topic,audience,keywords,brand,website,instructions)
+    INSERT INTO orders
+    (name,email,content_type,topic,audience,keywords,brand,website,instructions)
 
-        VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)
+    VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)
 
-        """,
+    """,
 
-        (
+    (
 
-        name,
-        email,
-        ctype,
-        topic,
-        audience,
-        keywords,
-        brand,
-        website,
-        details
+    name,
+    email,
+    ctype,
+    topic,
+    audience,
+    keywords,
+    brand,
+    website,
+    details
 
-        )
+    )
 
-        )
+    )
 
-        conn.commit()
+    conn.commit()
 
-        cur.close()
-        conn.close()
+    cur.close()
+    conn.close()
 
-        send_email(name,email,ctype)
-        notify_admin(data)
+    send_email(name,email,ctype)
 
-        return jsonify({"success":True})
-
-
-    except Exception as e:
-
-        print("SERVER ERROR:", e)
-
-        return jsonify({"error":"Server failure"}),500
-
-
-# ----------------------------
-# RUN SERVER
-# ----------------------------
-
-if __name__ == "__main__":
-
-    port = int(os.environ.get("PORT",10000))
-
-    app.run(host="0.0.0.0", port=port)
+    return redirect("/")
