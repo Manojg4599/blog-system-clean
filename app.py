@@ -6,10 +6,13 @@ from email.mime.text import MIMEText
 
 app = Flask(__name__)
 
+# Database file location
 DATABASE = "database/database.db"
 
+# Email credentials from Render environment variables
 EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASS = os.getenv("EMAIL_PASS")
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
 
 
 def get_db():
@@ -27,9 +30,7 @@ def init_db():
     cur = conn.cursor()
 
     cur.execute("""
-
     CREATE TABLE IF NOT EXISTS orders(
-
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
         email TEXT,
@@ -41,9 +42,7 @@ def init_db():
         website TEXT,
         instructions TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
     )
-
     """)
 
     conn.commit()
@@ -65,7 +64,6 @@ PRICING = {
 "Speech":("₹1500","₹12000 / month (10)","₹17000 / month (15)"),
 "Essay":("₹900","₹7000 / month (10)","₹9500 / month (15)"),
 "Official Letter":("₹700","₹5500 / month (10)","₹7500 / month (15)")
-
 }
 
 
@@ -80,7 +78,7 @@ Hello {name},
 
 Thank you for submitting your {ctype} request.
 
-Our editorial team has received your request.
+Our editorial team has received your request and will begin preparing your content package.
 
 Preview Access
 25% of the article will be available for preview.
@@ -115,7 +113,6 @@ ContentForge Editorial Team
 
 @app.route("/")
 def home():
-
     return render_template("index.html")
 
 
@@ -135,21 +132,15 @@ def submit():
     if not name or not email or not topic or not keywords:
         return "Required fields missing"
 
-
     conn = get_db()
     cur = conn.cursor()
 
     cur.execute("""
-
     INSERT INTO orders
     (name,email,content_type,topic,audience,keywords,brand,website,instructions)
-
     VALUES(?,?,?,?,?,?,?,?,?)
-
     """,
-
     (
-
     name,
     email,
     ctype,
@@ -159,9 +150,7 @@ def submit():
     brand,
     website,
     instructions
-
     )
-
     )
 
     conn.commit()
@@ -174,7 +163,6 @@ def submit():
 
 @app.route("/success")
 def success():
-
     return render_template("success.html")
 
 
@@ -193,5 +181,4 @@ def dashboard():
 
 
 if __name__ == "__main__":
-
     app.run()
