@@ -6,10 +6,8 @@ from email.mime.text import MIMEText
 
 app = Flask(__name__)
 
-# Database file location
 DATABASE = "database/database.db"
 
-# Email credentials from Render environment variables
 EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASS = os.getenv("EMAIL_PASS")
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
@@ -37,6 +35,7 @@ def init_db():
         content_type TEXT,
         topic TEXT,
         audience TEXT,
+        word_length TEXT,
         keywords TEXT,
         brand TEXT,
         website TEXT,
@@ -67,6 +66,24 @@ PRICING = {
 }
 
 
+def generate_keywords(topic):
+
+    base = topic.lower()
+
+    keywords = [
+        base,
+        f"{base} guide",
+        f"{base} tips",
+        f"{base} strategies",
+        f"best {base}",
+        f"{base} examples",
+        f"{base} tutorial",
+        f"how to {base}"
+    ]
+
+    return ", ".join(keywords)
+
+
 def send_email(name,email,ctype):
 
     try:
@@ -78,7 +95,7 @@ Hello {name},
 
 Thank you for submitting your {ctype} request.
 
-Our editorial team has received your request and will begin preparing your content package.
+Our editorial team has received your request.
 
 Preview Access
 25% of the article will be available for preview.
@@ -124,21 +141,22 @@ def submit():
     ctype = request.form.get("type")
     topic = request.form.get("topic")
     audience = request.form.get("audience")
+    word_length = request.form.get("length")
     keywords = request.form.get("keywords")
     brand = request.form.get("brand")
     website = request.form.get("website")
     instructions = request.form.get("details")
 
-    if not name or not email or not topic or not keywords:
-        return "Required fields missing"
+    if not keywords or keywords.strip() == "":
+        keywords = generate_keywords(topic)
 
     conn = get_db()
     cur = conn.cursor()
 
     cur.execute("""
     INSERT INTO orders
-    (name,email,content_type,topic,audience,keywords,brand,website,instructions)
-    VALUES(?,?,?,?,?,?,?,?,?)
+    (name,email,content_type,topic,audience,word_length,keywords,brand,website,instructions)
+    VALUES(?,?,?,?,?,?,?,?,?,?)
     """,
     (
     name,
@@ -146,6 +164,7 @@ def submit():
     ctype,
     topic,
     audience,
+    word_length,
     keywords,
     brand,
     website,
