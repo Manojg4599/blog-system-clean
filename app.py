@@ -1,31 +1,36 @@
 from flask import Flask, render_template, request, redirect
+import sqlite3
 import os
-import psycopg2
 import smtplib
 from email.mime.text import MIMEText
 
 app = Flask(__name__)
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
+DATABASE = "database/database.db"
 
-EMAIL_USER = os.environ.get("EMAIL_USER")
-EMAIL_PASS = os.environ.get("EMAIL_PASS")
+EMAIL_USER = os.getenv("EMAIL_USER")
+EMAIL_PASS = os.getenv("EMAIL_PASS")
 
 
 def get_db():
-
-    return psycopg2.connect(DATABASE_URL)
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
 def init_db():
+
+    if not os.path.exists("database"):
+        os.makedirs("database")
 
     conn = get_db()
     cur = conn.cursor()
 
     cur.execute("""
-    CREATE TABLE IF NOT EXISTS orders (
 
-        id SERIAL PRIMARY KEY,
+    CREATE TABLE IF NOT EXISTS orders(
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
         email TEXT,
         content_type TEXT,
@@ -38,10 +43,10 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
     )
+
     """)
 
     conn.commit()
-    cur.close()
     conn.close()
 
 
@@ -75,7 +80,7 @@ Hello {name},
 
 Thank you for submitting your {ctype} request.
 
-Our editorial team has received your request and will begin preparing the content package.
+Our editorial team has received your request.
 
 Preview Access
 25% of the article will be available for preview.
@@ -105,7 +110,6 @@ ContentForge Editorial Team
         server.quit()
 
     except Exception as e:
-
         print("EMAIL ERROR:",e)
 
 
@@ -129,7 +133,6 @@ def submit():
     instructions = request.form.get("details")
 
     if not name or not email or not topic or not keywords:
-
         return "Required fields missing"
 
 
@@ -141,7 +144,7 @@ def submit():
     INSERT INTO orders
     (name,email,content_type,topic,audience,keywords,brand,website,instructions)
 
-    VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)
+    VALUES(?,?,?,?,?,?,?,?,?)
 
     """,
 
@@ -162,7 +165,6 @@ def submit():
     )
 
     conn.commit()
-    cur.close()
     conn.close()
 
     send_email(name,email,ctype)
@@ -180,13 +182,11 @@ def success():
 def dashboard():
 
     conn = get_db()
-    cur = conn.cursor()
 
-    cur.execute("SELECT * FROM orders ORDER BY created_at DESC")
+    orders = conn.execute(
+        "SELECT * FROM orders ORDER BY created_at DESC"
+    ).fetchall()
 
-    orders = cur.fetchall()
-
-    cur.close()
     conn.close()
 
     return render_template("dashboard.html",orders=orders)
