@@ -13,6 +13,10 @@ background:#f4f6f9;
 padding:40px;
 }
 
+h1{
+margin-bottom:30px;
+}
+
 table{
 width:100%;
 border-collapse:collapse;
@@ -22,11 +26,16 @@ background:white;
 th,td{
 padding:12px;
 border:1px solid #ddd;
+text-align:left;
 }
 
 th{
 background:#0073e6;
 color:white;
+}
+
+tr:nth-child(even){
+background:#f2f2f2;
 }
 
 </style>
@@ -40,10 +49,12 @@ color:white;
 <table>
 
 <tr>
-<th>Type</th>
+<th>ID</th>
+<th>Name</th>
+<th>Email</th>
+<th>Content Type</th>
 <th>Topic</th>
 <th>Audience</th>
-<th>Length</th>
 <th>Keywords</th>
 <th>Brand</th>
 </tr>
@@ -52,12 +63,14 @@ color:white;
 
 <tr>
 
-<td>{{order[0]}}</td>
-<td>{{order[1]}}</td>
-<td>{{order[2]}}</td>
-<td>{{order[3]}}</td>
-<td>{{order[4]}}</td>
-<td>{{order[5]}}</td>
+<td>{{order["id"]}}</td>
+<td>{{order["name"]}}</td>
+<td>{{order["email"]}}</td>
+<td>{{order["content_type"]}}</td>
+<td>{{order["topic"]}}</td>
+<td>{{order["audience"]}}</td>
+<td>{{order["keywords"]}}</td>
+<td>{{order["brand"]}}</td>
 
 </tr>
 
@@ -66,4 +79,5 @@ color:white;
 </table>
 
 </body>
+
 </html>
