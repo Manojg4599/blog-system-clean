@@ -6,14 +6,46 @@ from email.mime.text import MIMEText
 
 app = Flask(__name__)
 
-DB_URL = os.getenv("DB_URL")
-EMAIL_USER = os.getenv("EMAIL_USER")
-EMAIL_PASS = os.getenv("EMAIL_PASS")
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+EMAIL_USER = os.environ.get("EMAIL_USER")
+EMAIL_PASS = os.environ.get("EMAIL_PASS")
 
 
-def db():
-    return psycopg2.connect(DB_URL, sslmode="require")
+def get_db():
+
+    return psycopg2.connect(DATABASE_URL)
+
+
+def init_db():
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS orders (
+
+        id SERIAL PRIMARY KEY,
+        name TEXT,
+        email TEXT,
+        content_type TEXT,
+        topic TEXT,
+        audience TEXT,
+        keywords TEXT,
+        brand TEXT,
+        website TEXT,
+        instructions TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+    )
+    """)
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+init_db()
 
 
 PRICING = {
@@ -32,54 +64,21 @@ PRICING = {
 }
 
 
-def init_db():
-
-    conn=db()
-    cur=conn.cursor()
-
-    cur.execute("""
-
-    CREATE TABLE IF NOT EXISTS orders(
-
-    id SERIAL PRIMARY KEY,
-    name TEXT,
-    email TEXT,
-    content_type TEXT,
-    topic TEXT,
-    audience TEXT,
-    keywords TEXT,
-    brand TEXT,
-    website TEXT,
-    instructions TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
-    )
-
-    """)
-
-    conn.commit()
-    cur.close()
-    conn.close()
-
-
-init_db()
-
-
 def send_email(name,email,ctype):
 
     try:
 
-        price=PRICING.get(ctype)
+        price = PRICING.get(ctype)
 
-        body=f"""
+        body = f"""
 Hello {name},
 
 Thank you for submitting your {ctype} request.
 
-Our editorial team is preparing your article.
+Our editorial team has received your request and will begin preparing the content package.
 
 Preview Access
-25% of the article will be visible initially.
+25% of the article will be available for preview.
 
 Content Plans
 
@@ -93,47 +92,49 @@ Best Regards
 ContentForge Editorial Team
 """
 
-        msg=MIMEText(body)
+        msg = MIMEText(body)
 
-        msg["Subject"]="ContentForge Request Received"
-        msg["From"]=EMAIL_USER
-        msg["To"]=email
+        msg["Subject"] = "ContentForge Request Received"
+        msg["From"] = EMAIL_USER
+        msg["To"] = email
 
-        s=smtplib.SMTP("smtp.gmail.com",587)
-        s.starttls()
-        s.login(EMAIL_USER,EMAIL_PASS)
-        s.send_message(msg)
-        s.quit()
+        server = smtplib.SMTP("smtp.gmail.com",587)
+        server.starttls()
+        server.login(EMAIL_USER,EMAIL_PASS)
+        server.send_message(msg)
+        server.quit()
 
     except Exception as e:
+
         print("EMAIL ERROR:",e)
 
 
 @app.route("/")
 def home():
+
     return render_template("index.html")
 
 
-@app.route("/submit",methods=["POST"])
+@app.route("/submit", methods=["POST"])
 def submit():
 
-    name=request.form.get("name")
-    email=request.form.get("email")
-    ctype=request.form.get("type")
-    topic=request.form.get("topic")
-    audience=request.form.get("audience")
-    keywords=request.form.get("keywords")
-    brand=request.form.get("brand")
-    website=request.form.get("website")
-    details=request.form.get("details")
+    name = request.form.get("name")
+    email = request.form.get("email")
+    ctype = request.form.get("type")
+    topic = request.form.get("topic")
+    audience = request.form.get("audience")
+    keywords = request.form.get("keywords")
+    brand = request.form.get("brand")
+    website = request.form.get("website")
+    instructions = request.form.get("details")
 
     if not name or not email or not topic or not keywords:
 
         return "Required fields missing"
 
 
-    conn=db()
-    cur=conn.cursor()
+    conn = get_db()
+    cur = conn.cursor()
 
     cur.execute("""
 
@@ -154,17 +155,43 @@ def submit():
     keywords,
     brand,
     website,
-    details
+    instructions
 
     )
 
     )
 
     conn.commit()
-
     cur.close()
     conn.close()
 
     send_email(name,email,ctype)
 
-    return redirect("/")
+    return redirect("/success")
+
+
+@app.route("/success")
+def success():
+
+    return render_template("success.html")
+
+
+@app.route("/dashboard")
+def dashboard():
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("SELECT * FROM orders ORDER BY created_at DESC")
+
+    orders = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template("dashboard.html",orders=orders)
+
+
+if __name__ == "__main__":
+
+    app.run()
