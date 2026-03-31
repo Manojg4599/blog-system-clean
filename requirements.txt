@@ -1,5 +1,3 @@
-flask
+Flask
 gunicorn
-openpyxl
 psycopg2-binary
-python-dotenv
